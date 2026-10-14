@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="持仓" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="description" content="极兔 · 拼多多 · 标普500 持仓跟踪，每 15 分钟自动刷新" />
+  <meta name="description" content="极兔 · 拼多多 · 标普500 · A股持仓跟踪，每 15 分钟自动刷新" />
   <title>持仓跟踪 · Danny</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
@@ -535,17 +535,22 @@
       <div class="summary-card">
         <div class="label">总成本（USD）</div>
         <div class="value" id="sumCost">加载中</div>
-        <div class="sub" id="sumCostSub">含港股折算</div>
+        <div class="sub" id="sumCostSub">含港股/A股折算</div>
       </div>
       <div class="summary-card">
         <div class="label">总市值（USD）</div>
         <div class="value" id="sumMv">加载中</div>
         <div class="sub" id="sumMvSub">实时报价合计</div>
       </div>
-      <div class="summary-card" style="grid-column: 1 / -1;">
+      <div class="summary-card">
         <div class="label">汇率 USD/HKD</div>
-        <div class="value" id="sumFx">加载中</div>
-        <div class="sub" id="sumFxSub">Yahoo USDHKD=X</div>
+        <div class="value" id="sumFxHkd">加载中</div>
+        <div class="sub" id="sumFxHkdSub">Yahoo USDHKD=X</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">汇率 USD/CNY</div>
+        <div class="value" id="sumFxCny">加载中</div>
+        <div class="sub" id="sumFxCnySub">Yahoo USDCNY=X</div>
       </div>
     </div>
 
@@ -592,9 +597,27 @@
         avgCost: 600.0,
         currency: "USD",
       },
+      {
+        id: "baoan",
+        name: "中国宝安",
+        ticker: "000009.SZ",
+        yahoo: "000009.SZ",
+        shares: 100,
+        avgCost: 17.835,
+        currency: "CNY",
+      },
+      {
+        id: "liyuan",
+        name: "ST利源",
+        ticker: "002501.SZ",
+        yahoo: "002501.SZ",
+        shares: 285_900,
+        avgCost: 2.4979,
+        currency: "CNY",
+      },
     ];
 
-    const FX_SYMBOL = "USDHKD=X";
+    const FX_SYMBOLS = ["USDHKD=X", "USDCNY=X"];
     const REFRESH_MS = 15 * 60 * 1000;
     /** 公共 CORS 代理（仅作备用；优先走本机 serve.py 的 /api/quote） */
     const PROXY_BUILDERS = [
@@ -627,7 +650,10 @@
 
     function fmtMoney(n, currency, digits = 2) {
       if (n == null || Number.isNaN(n)) return "—";
-      const prefix = currency === "HKD" ? "HK$" : currency === "USD" ? "$" : "";
+      const prefix =
+        currency === "HKD" ? "HK$" :
+        currency === "USD" ? "$" :
+        currency === "CNY" ? "¥" : "";
       const sign = n < 0 ? "-" : "";
       return sign + prefix + fmtNum(Math.abs(n), digits);
     }
@@ -720,10 +746,13 @@
         };
         applied += 1;
       }
-      const fx = qmap["USDHKD=X"];
-      if (fx && fx.price != null && !fx.error) {
-        lastFx = { rate: Number(fx.price), error: false };
-      }
+      const hkd = qmap["USDHKD=X"];
+      const cny = qmap["USDCNY=X"];
+      lastFx = {
+        hkd: hkd && hkd.price != null && !hkd.error ? Number(hkd.price) : (lastFx && lastFx.hkd != null ? lastFx.hkd : null),
+        cny: cny && cny.price != null && !cny.error ? Number(cny.price) : (lastFx && lastFx.cny != null ? lastFx.cny : null),
+        error: false,
+      };
       return applied;
     }
 
@@ -827,14 +856,30 @@
       }).join("");
     }
 
+    function fxRateFor(currency) {
+      if (!lastFx) return null;
+      if (currency === "HKD") return lastFx.hkd != null ? lastFx.hkd : null;
+      if (currency === "CNY") return lastFx.cny != null ? lastFx.cny : null;
+      return null;
+    }
+
+    function toUsd(amount, currency) {
+      if (currency === "USD") return amount;
+      const rate = fxRateFor(currency);
+      if (rate == null || rate === 0) return null;
+      return amount / rate;
+    }
+
     function renderSummary() {
-      const fx = lastFx && lastFx.rate != null ? lastFx.rate : null;
       const fxNote = el("fxNote");
+      const hkdRate = lastFx && lastFx.hkd != null ? lastFx.hkd : null;
+      const cnyRate = lastFx && lastFx.cny != null ? lastFx.cny : null;
 
       let totalCostUsd = 0;
       let totalMvUsd = 0;
       let allReady = true;
-      let hkdMissingFx = false;
+      let missingFx = false;
+      const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
 
       for (const h of HOLDINGS) {
         const q = lastGood[h.id];
@@ -844,16 +889,17 @@
         }
         const cost = h.shares * h.avgCost;
         const mv = h.shares * q.price;
-        if (h.currency === "HKD") {
-          if (fx) {
-            totalCostUsd += cost / fx;
-            totalMvUsd += mv / fx;
-          } else {
-            hkdMissingFx = true;
+        const costUsd = toUsd(cost, h.currency);
+        const mvUsd = toUsd(mv, h.currency);
+        if (costUsd == null || mvUsd == null) {
+          missingFx = true;
+          if (skipped[h.currency]) {
+            skipped[h.currency].cost += cost;
+            skipped[h.currency].mv += mv;
           }
         } else {
-          totalCostUsd += cost;
-          totalMvUsd += mv;
+          totalCostUsd += costUsd;
+          totalMvUsd += mvUsd;
         }
       }
 
@@ -862,54 +908,48 @@
         el("sumMv").textContent = "加载中";
         el("sumPnl").textContent = "加载中";
         el("sumPnlPct").textContent = "—";
-        el("sumFx").textContent = "加载中";
+        el("sumFxHkd").textContent = "加载中";
+        el("sumFxCny").textContent = "加载中";
         return;
       }
 
-      if (hkdMissingFx) {
-        let usdCost = 0, usdMv = 0, hkdCost = 0, hkdMv = 0;
-        for (const h of HOLDINGS) {
-          const q = lastGood[h.id];
-          if (!q) continue;
-          const cost = h.shares * h.avgCost;
-          const mv = h.shares * q.price;
-          if (h.currency === "HKD") {
-            hkdCost += cost;
-            hkdMv += mv;
-          } else {
-            usdCost += cost;
-            usdMv += mv;
-          }
-        }
-        const usdPnl = usdMv - usdCost;
-        el("sumCost").textContent = fmtMoney(usdCost, "USD");
-        el("sumMv").textContent = fmtMoney(usdMv, "USD");
-        el("sumPnl").textContent = fmtMoney(usdPnl, "USD");
-        el("sumPnl").className = "value " + pnlClass(usdPnl);
-        el("sumPnlPct").textContent = usdCost ? fmtPct((usdPnl / usdCost) * 100) : "—";
-        el("sumPnlPct").className = "sub " + pnlClass(usdPnl);
-        el("sumCostSub").textContent = "仅 USD 标的（极兔未折算）";
-        el("sumMvSub").textContent = `另：极兔成本 ${fmtMoney(hkdCost, "HKD")} / 市值 ${fmtMoney(hkdMv, "HKD")}`;
-        el("sumFx").textContent = "不可用";
-        el("sumFxSub").textContent = "无法获取汇率，分币种展示";
+      const pnl = totalMvUsd - totalCostUsd;
+      el("sumCost").textContent = fmtMoney(totalCostUsd, "USD");
+      el("sumMv").textContent = fmtMoney(totalMvUsd, "USD");
+      el("sumPnl").textContent = fmtMoney(pnl, "USD");
+      el("sumPnl").className = "value " + pnlClass(pnl);
+      el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
+      el("sumPnlPct").className = "sub " + pnlClass(pnl);
+
+      el("sumFxHkd").textContent = hkdRate != null ? fmtNum(hkdRate, 4) : "不可用";
+      el("sumFxHkdSub").textContent = hkdRate != null
+        ? "Yahoo USDHKD=X · 1 USD = x HKD"
+        : "无法获取港币汇率";
+      el("sumFxCny").textContent = cnyRate != null ? fmtNum(cnyRate, 4) : "不可用";
+      el("sumFxCnySub").textContent = cnyRate != null
+        ? "Yahoo USDCNY=X · 1 USD = x CNY"
+        : "无法获取人民币汇率";
+
+      const bits = [];
+      if (hkdRate != null) bits.push(`港股按 USD/HKD ≈ ${fmtNum(hkdRate, 4)}`);
+      if (cnyRate != null) bits.push(`A股按 USD/CNY ≈ ${fmtNum(cnyRate, 4)}`);
+      if (missingFx) {
+        const parts = [];
+        if (skipped.HKD.mv) parts.push(`极兔 ${fmtMoney(skipped.HKD.mv, "HKD")}`);
+        if (skipped.CNY.mv) parts.push(`A股 ${fmtMoney(skipped.CNY.mv, "CNY")}`);
+        el("sumCostSub").textContent = "部分标的因缺汇率未折算";
+        el("sumMvSub").textContent = parts.length ? `未计入：${parts.join(" · ")}` : "实时报价合计（USD）";
         fxNote.style.display = "block";
         fxNote.className = "fx-note warn";
-        fxNote.textContent = "汇率 USD/HKD 暂不可用：组合合计仅含美元标的；极兔以港币单独显示。";
+        fxNote.textContent = "部分汇率暂不可用：组合合计仅含已折算标的；未折算持仓按原币种单独显示。";
       } else {
-        const pnl = totalMvUsd - totalCostUsd;
-        el("sumCost").textContent = fmtMoney(totalCostUsd, "USD");
-        el("sumMv").textContent = fmtMoney(totalMvUsd, "USD");
-        el("sumPnl").textContent = fmtMoney(pnl, "USD");
-        el("sumPnl").className = "value " + pnlClass(pnl);
-        el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
-        el("sumPnlPct").className = "sub " + pnlClass(pnl);
-        el("sumCostSub").textContent = fx ? `含极兔按 ${fmtNum(fx, 4)} 折算` : "含港股折算";
+        el("sumCostSub").textContent = bits.length ? `含 ${bits.join("；")}` : "多币种折算";
         el("sumMvSub").textContent = "实时报价合计（USD）";
-        el("sumFx").textContent = fx != null ? fmtNum(fx, 4) : "—";
-        el("sumFxSub").textContent = "Yahoo USDHKD=X · 1 USD = x HKD";
         fxNote.style.display = "block";
         fxNote.className = "fx-note";
-        fxNote.textContent = `组合汇总已将极兔（HKD）按 USD/HKD ≈ ${fmtNum(fx, 4)} 折算为美元。`;
+        fxNote.textContent = bits.length
+          ? `组合汇总已将非美元持仓折算为美元（${bits.join("；")}）。`
+          : "组合汇总为美元。";
       }
     }
 
@@ -954,21 +994,31 @@
         })
       );
 
-      try {
-        const fxJson = await fetchYahoo(FX_SYMBOL);
-        const fxQuote = parseQuote(fxJson);
-        lastFx = { rate: fxQuote.price, fetchedAt: new Date(), error: false };
-      } catch (err) {
-        if (lastFx) lastFx = { ...lastFx, error: true };
-        else lastFx = null;
-        errors.push("汇率");
-      }
+      const fxNext = {
+        hkd: lastFx && lastFx.hkd != null ? lastFx.hkd : null,
+        cny: lastFx && lastFx.cny != null ? lastFx.cny : null,
+        fetchedAt: new Date(),
+        error: false,
+      };
+      await Promise.all(
+        FX_SYMBOLS.map(async (sym) => {
+          try {
+            const fxJson = await fetchYahoo(sym);
+            const fxQuote = parseQuote(fxJson);
+            if (sym === "USDHKD=X") fxNext.hkd = fxQuote.price;
+            if (sym === "USDCNY=X") fxNext.cny = fxQuote.price;
+          } catch (err) {
+            errors.push(sym === "USDHKD=X" ? "USD/HKD" : "USD/CNY");
+          }
+        })
+      );
+      lastFx = fxNext;
 
       renderCards();
       renderSummary();
       el("lastUpdated").textContent = shanghaiNow();
 
-      if (errors.length === HOLDINGS.length + 1 && Object.keys(lastGood).length === 0) {
+      if (errors.length >= HOLDINGS.length + FX_SYMBOLS.length && Object.keys(lastGood).length === 0) {
         setStatus("error", "全部报价获取失败");
         const note = el("fxNote");
         note.style.display = "block";
