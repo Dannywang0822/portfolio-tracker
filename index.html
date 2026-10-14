@@ -247,18 +247,66 @@
       color: var(--dim);
     }
 
+    .summary-card .ccy-multi {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      color: var(--dim);
+      line-height: 1.35;
+    }
+    .summary-card .ccy-multi span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fx-strip {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 2px 8px;
+      padding: 5px 10px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--border);
+      font-size: 0.66rem;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+      line-height: 1.3;
+    }
+    .fx-strip .fx-item {
+      white-space: nowrap;
+    }
+    .fx-strip b {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 600;
+      color: var(--text);
+      margin-left: 3px;
+    }
+    .fx-strip .fx-sep {
+      color: var(--dim);
+      opacity: 0.55;
+      user-select: none;
+    }
+
     .up { color: var(--green); }
     .down { color: var(--red); }
     .flat { color: var(--muted); }
 
     .fx-note {
       margin-bottom: 12px;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-radius: 10px;
       background: var(--accent-soft);
       border: 1px solid rgba(59, 130, 246, 0.25);
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
     .fx-note.warn {
       background: rgba(245, 158, 11, 0.1);
@@ -683,7 +731,8 @@
       .summary { gap: 8px; margin: 12px 0 10px; }
       .summary-card .value { font-size: 1.02rem; }
       .summary-card.pnl-hero .value { font-size: 1.4rem; }
-      .summary-card.fx-card { display: none; }
+      .summary-card .ccy-multi { font-size: 0.62rem; }
+      .fx-strip { font-size: 0.62rem; padding: 4px 8px; gap: 2px 6px; }
       .toolbar { gap: 6px; }
       .toolbar-actions { gap: 5px; width: 100%; margin-left: 0; justify-content: stretch; }
       .toolbar-actions > button { flex: 1; min-width: 0; padding-left: 10px; padding-right: 10px; }
@@ -993,24 +1042,27 @@
         <div class="sub" id="sumPnlPct">—</div>
       </div>
       <div class="summary-card">
-        <div class="label">总成本（USD）</div>
+        <div class="label">总成本</div>
         <div class="value" id="sumCost">加载中</div>
-        <div class="sub" id="sumCostSub">含港股/A股折算</div>
+        <div class="ccy-multi" id="sumCostMulti" aria-label="总成本多币种">
+          <span id="sumCostHkd">HK$—</span>
+          <span id="sumCostCny">¥—</span>
+        </div>
+        <div class="sub" id="sumCostSub">USD · HKD · CNY</div>
       </div>
       <div class="summary-card">
-        <div class="label">总市值（USD）</div>
+        <div class="label">总市值</div>
         <div class="value" id="sumMv">加载中</div>
-        <div class="sub" id="sumMvSub">实时报价合计</div>
+        <div class="ccy-multi" id="sumMvMulti" aria-label="总市值多币种">
+          <span id="sumMvHkd">HK$—</span>
+          <span id="sumMvCny">¥—</span>
+        </div>
+        <div class="sub" id="sumMvSub">USD · HKD · CNY</div>
       </div>
-      <div class="summary-card fx-card">
-        <div class="label">汇率 USD/HKD</div>
-        <div class="value" id="sumFxHkd">加载中</div>
-        <div class="sub" id="sumFxHkdSub">Yahoo USDHKD=X</div>
-      </div>
-      <div class="summary-card fx-card">
-        <div class="label">汇率 USD/CNY</div>
-        <div class="value" id="sumFxCny">加载中</div>
-        <div class="sub" id="sumFxCnySub">Yahoo USDCNY=X</div>
+      <div class="fx-strip" id="fxStrip" aria-label="汇率">
+        <span class="fx-item">USD/HKD<b id="sumFxHkd">—</b></span>
+        <span class="fx-sep" aria-hidden="true">·</span>
+        <span class="fx-item">USD/CNY<b id="sumFxCny">—</b></span>
       </div>
     </div>
 
@@ -1850,6 +1902,27 @@
       return amount / rate;
     }
 
+    function fromUsd(usdAmount, currency) {
+      if (usdAmount == null || Number.isNaN(usdAmount)) return null;
+      if (currency === "USD") return usdAmount;
+      const rate = fxRateFor(currency);
+      if (rate == null || rate === 0) return null;
+      return usdAmount * rate;
+    }
+
+    function fmtTriCurrency(usdAmount) {
+      if (usdAmount == null || Number.isNaN(usdAmount)) {
+        return { usd: "—", hkd: "HK$—", cny: "¥—" };
+      }
+      const hkd = fromUsd(usdAmount, "HKD");
+      const cny = fromUsd(usdAmount, "CNY");
+      return {
+        usd: fmtMoney(usdAmount, "USD"),
+        hkd: hkd != null ? fmtMoney(hkd, "HKD") : "HK$—",
+        cny: cny != null ? fmtMoney(cny, "CNY") : "¥—",
+      };
+    }
+
     const viewState = { account: "all", market: "all", sort: "default" };
 
     function marketLabel(currency) {
@@ -2070,50 +2143,49 @@
       if (!allReady && Object.keys(lastGood).length === 0) {
         el("sumCost").textContent = "加载中";
         el("sumMv").textContent = "加载中";
+        el("sumCostHkd").textContent = "HK$—";
+        el("sumCostCny").textContent = "¥—";
+        el("sumMvHkd").textContent = "HK$—";
+        el("sumMvCny").textContent = "¥—";
         el("sumPnl").textContent = "加载中";
         el("sumPnlPct").textContent = "—";
-        el("sumFxHkd").textContent = "加载中";
-        el("sumFxCny").textContent = "加载中";
+        el("sumFxHkd").textContent = "—";
+        el("sumFxCny").textContent = "—";
         return;
       }
 
       const pnl = totalMvUsd - totalCostUsd;
-      el("sumCost").textContent = fmtMoney(totalCostUsd, "USD");
-      el("sumMv").textContent = fmtMoney(totalMvUsd, "USD");
+      const costTri = fmtTriCurrency(totalCostUsd);
+      const mvTri = fmtTriCurrency(totalMvUsd);
+      el("sumCost").textContent = costTri.usd;
+      el("sumCostHkd").textContent = costTri.hkd;
+      el("sumCostCny").textContent = costTri.cny;
+      el("sumMv").textContent = mvTri.usd;
+      el("sumMvHkd").textContent = mvTri.hkd;
+      el("sumMvCny").textContent = mvTri.cny;
       el("sumPnl").textContent = fmtMoney(pnl, "USD");
       el("sumPnl").className = "value " + pnlClass(pnl);
       el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
       el("sumPnlPct").className = "sub " + pnlClass(pnl);
 
-      el("sumFxHkd").textContent = hkdRate != null ? fmtNum(hkdRate, 4) : "不可用";
-      el("sumFxHkdSub").textContent = hkdRate != null
-        ? "Yahoo USDHKD=X · 1 USD = x HKD"
-        : "无法获取港币汇率";
-      el("sumFxCny").textContent = cnyRate != null ? fmtNum(cnyRate, 4) : "不可用";
-      el("sumFxCnySub").textContent = cnyRate != null
-        ? "Yahoo USDCNY=X · 1 USD = x CNY"
-        : "无法获取人民币汇率";
+      el("sumFxHkd").textContent = hkdRate != null ? fmtNum(hkdRate, 4) : "—";
+      el("sumFxCny").textContent = cnyRate != null ? fmtNum(cnyRate, 4) : "—";
 
-      const bits = [];
-      if (hkdRate != null) bits.push(`港股按 USD/HKD ≈ ${fmtNum(hkdRate, 4)}`);
-      if (cnyRate != null) bits.push(`A股按 USD/CNY ≈ ${fmtNum(cnyRate, 4)}`);
       if (missingFx) {
         const parts = [];
-        if (skipped.HKD.mv) parts.push(`极兔 ${fmtMoney(skipped.HKD.mv, "HKD")}`);
+        if (skipped.HKD.mv) parts.push(`港股 ${fmtMoney(skipped.HKD.mv, "HKD")}`);
         if (skipped.CNY.mv) parts.push(`A股 ${fmtMoney(skipped.CNY.mv, "CNY")}`);
         el("sumCostSub").textContent = "部分标的因缺汇率未折算";
-        el("sumMvSub").textContent = parts.length ? `未计入：${parts.join(" · ")}` : "实时报价合计（USD）";
+        el("sumMvSub").textContent = parts.length ? `未计入：${parts.join(" · ")}` : "USD · HKD · CNY";
         fxNote.style.display = "block";
         fxNote.className = "fx-note warn";
         fxNote.textContent = "部分汇率暂不可用：组合合计仅含已折算标的；未折算持仓按原币种单独显示。";
       } else {
-        el("sumCostSub").textContent = bits.length ? `含 ${bits.join("；")}` : "多币种折算";
-        el("sumMvSub").textContent = "实时报价合计（USD）";
-        fxNote.style.display = "block";
+        el("sumCostSub").textContent = "USD · HKD · CNY";
+        el("sumMvSub").textContent = "实时报价 · 三币种";
+        fxNote.style.display = "none";
         fxNote.className = "fx-note";
-        fxNote.textContent = bits.length
-          ? `组合汇总已将非美元持仓折算为美元（${bits.join("；")}）。`
-          : "组合汇总为美元。";
+        fxNote.textContent = "";
       }
       syncStickyPnl();
     }
