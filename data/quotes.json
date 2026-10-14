@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-14T22:53:56.548260+08:00",
+  "updatedAt": "2026-10-14T22:55:19.871075+08:00",
   "quotes": {
     "1519.HK": {
       "price": 8.925,
@@ -8,15 +8,15 @@
       "currency": "HKD"
     },
     "PDD": {
-      "price": 81.43,
+      "price": 81.475,
       "previousClose": 81.96,
-      "changePct": -0.647,
+      "changePct": -0.592,
       "currency": "USD"
     },
     "SPY": {
-      "price": 771.892,
+      "price": 772.0,
       "previousClose": 778.01,
-      "changePct": -0.786,
+      "changePct": -0.772,
       "currency": "USD"
     },
     "000009.SZ": {
@@ -31,10 +31,28 @@
       "changePct": -2.273,
       "currency": "CNY"
     },
+    "002828.SZ": {
+      "price": 10.62,
+      "previousClose": 10.56,
+      "changePct": 0.568,
+      "currency": "CNY"
+    },
+    "161033.SZ": {
+      "price": 1.547,
+      "previousClose": 1.57,
+      "changePct": -1.465,
+      "currency": "CNY"
+    },
+    "300405.SZ": {
+      "price": 5.62,
+      "previousClose": 5.82,
+      "changePct": -3.436,
+      "currency": "CNY"
+    },
     "USDHKD=X": {
-      "price": 7.8482,
+      "price": 7.8484,
       "previousClose": 7.8473,
-      "changePct": 0.0113,
+      "changePct": 0.014,
       "currency": "HKD"
     },
     "USDCNY=X": {
