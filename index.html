@@ -1256,6 +1256,16 @@
       return "futu";
     }
 
+    function bareTicker(sym) {
+      return String(sym || "").replace(/\.(SZ|SS|HK)$/i, "");
+    }
+
+    /**
+     * 只规范化 Yahoo 行情键，绝不合并持仓行。
+     * 同代码不同账户（如平安 + 永隆都有 300629.SZ）必须各保留一行、各有独立 id；
+     * 此处仅在「代码能对上」时借用内置的标准后缀（300629 → 300629.SZ），方便吃 quotes.json。
+     * 禁止按名称去对齐/去重，避免误伤跨券商持仓。
+     */
     function resolveHoldingYahoo(h) {
       const currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
       let y = normalizeYahooSymbol(h.yahoo || h.ticker, currency);
@@ -1267,13 +1277,14 @@
           y = normalizeYahooSymbol(code, "CNY");
         }
       }
-      // 与内置持仓同名或同代码时，直接复用内置 Yahoo 代码（例如手动永隆「新劲刚」→ 300629.SZ）
+      // 仅按代码（含去后缀）对齐 Yahoo 键；不按名称、不改 account/id/shares
+      const yBare = bareTicker(y);
       const built = HOLDINGS.find(
         (b) =>
           b.yahoo === y ||
           b.ticker === y ||
-          b.name === h.name ||
-          (b.ticker && y && b.ticker.replace(/\.(SZ|SS|HK)$/i, "") === y.replace(/\.(SZ|SS|HK)$/i, ""))
+          (yBare && bareTicker(b.yahoo) === yBare) ||
+          (yBare && bareTicker(b.ticker) === yBare)
       );
       if (built) y = built.yahoo;
       return y;
@@ -1321,6 +1332,7 @@
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
     }
 
+    // 内置 + 手动拼接；同一 yahoo 不同 account 保留多行，绝不按代码/名称去重
     function allHoldings() {
       return HOLDINGS.concat(loadCustomHoldings());
     }
@@ -2119,7 +2131,13 @@
     }
 
     function upsertCustomHolding(payload) {
+      // 只按 id 更新；同 yahoo/名称但不同账户的行互不影响，禁止跨账户合并
       const list = loadCustomHoldings();
+      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
+      // 手动仓不得占用内置 id，避免「永隆新劲刚」写穿平安内置行
+      if (payload.id && builtinIds.has(payload.id)) {
+        payload = { ...payload, id: genCustomId() };
+      }
       const idx = list.findIndex((h) => h.id === payload.id);
       if (idx >= 0) list[idx] = payload;
       else list.push(payload);

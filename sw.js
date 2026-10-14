@@ -2,7 +2,7 @@
  * - 壳资源（HTML/CSS/manifest/icons）：缓存优先，离线可打开界面
  * - 行情请求（Yahoo / 代理）：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v15";
+const CACHE_NAME = "portfolio-h5-shell-v16";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
