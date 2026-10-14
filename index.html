@@ -706,11 +706,17 @@
     </div>
 
     <div class="view-bar" id="viewBar">
+      <div class="chip-row" role="tablist" aria-label="账户筛选">
+        <button type="button" class="chip active" data-account="all">全部账户</button>
+        <button type="button" class="chip" data-account="futu">富途</button>
+        <button type="button" class="chip" data-account="pingan">平安</button>
+        <button type="button" class="chip" data-account="winglung">招商永隆</button>
+      </div>
       <div class="chip-row" role="tablist" aria-label="市场筛选">
-        <button type="button" class="chip active" data-filter="all">全部</button>
-        <button type="button" class="chip" data-filter="CNY">A股</button>
-        <button type="button" class="chip" data-filter="HKD">港股</button>
-        <button type="button" class="chip" data-filter="USD">美股</button>
+        <button type="button" class="chip active" data-market="all">全部市场</button>
+        <button type="button" class="chip" data-market="CNY">A股</button>
+        <button type="button" class="chip" data-market="HKD">港股</button>
+        <button type="button" class="chip" data-market="USD">美股</button>
       </div>
       <div class="sort-row">
         <label for="sortSelect">排序</label>
@@ -1166,7 +1172,7 @@
       return amount / rate;
     }
 
-    const viewState = { filter: "all", sort: "default" };
+    const viewState = { account: "all", market: "all", sort: "default" };
 
     function marketLabel(currency) {
       if (currency === "CNY") return "A股";
@@ -1196,11 +1202,19 @@
       return { q, loading, price, changePct, costBasis, mv, pnl, pnlPct, mvUsd, pnlUsd };
     }
 
-    function visibleHoldings() {
+    function filteredHoldings() {
       let list = HOLDINGS.slice();
-      if (viewState.filter !== "all") {
-        list = list.filter((h) => h.currency === viewState.filter);
+      if (viewState.account !== "all") {
+        list = list.filter((h) => h.account === viewState.account);
       }
+      if (viewState.market !== "all") {
+        list = list.filter((h) => h.currency === viewState.market);
+      }
+      return list;
+    }
+
+    function visibleHoldings() {
+      let list = filteredHoldings();
       const sortKey = viewState.sort;
       if (sortKey !== "default") {
         list.sort((a, b) => {
@@ -1305,7 +1319,8 @@
       let missingFx = false;
       const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
 
-      for (const h of HOLDINGS) {
+      const summaryList = filteredHoldings();
+      for (const h of summaryList) {
         const q = lastGood[h.id];
         if (!q || q.price == null) {
           allReady = false;
@@ -1574,13 +1589,24 @@
     el("logoutBtn").addEventListener("click", logout);
     el("refreshBtn").addEventListener("click", () => refreshAll(true));
 
-    document.querySelectorAll(".chip[data-filter]").forEach((btn) => {
+    document.querySelectorAll(".chip[data-account]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        viewState.filter = btn.getAttribute("data-filter") || "all";
-        document.querySelectorAll(".chip[data-filter]").forEach((b) => {
+        viewState.account = btn.getAttribute("data-account") || "all";
+        document.querySelectorAll(".chip[data-account]").forEach((b) => {
           b.classList.toggle("active", b === btn);
         });
         renderCards();
+        renderSummary();
+      });
+    });
+    document.querySelectorAll(".chip[data-market]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        viewState.market = btn.getAttribute("data-market") || "all";
+        document.querySelectorAll(".chip[data-market]").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+        renderCards();
+        renderSummary();
       });
     });
     el("sortSelect").addEventListener("change", (e) => {
