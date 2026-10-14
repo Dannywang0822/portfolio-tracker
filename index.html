@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="持仓" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="极兔 · 拼多多 · 标普500 持仓跟踪，每 15 分钟自动刷新" />
+  <title>持仓跟踪 · Danny</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --bg-elev: #12181f;
+      --bg-card: #161d27;
+      --border: #243041;
+      --border-soft: #1c2533;
+      --text: #e8eef7;
+      --muted: #8b9bb0;
+      --dim: #5d6d82;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.12);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.12);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.12);
+      --amber: #f59e0b;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --header-h: 56px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: "IBM Plex Sans", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 480px at 8% -8%, rgba(59, 130, 246, 0.14), transparent 50%),
+        radial-gradient(700px 400px at 95% 0%, rgba(34, 197, 94, 0.08), transparent 45%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      min-height: 100dvh;
+      line-height: 1.45;
+      overscroll-behavior-y: none;
+      -webkit-tap-highlight-color: transparent;
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+      padding-bottom: calc(20px + var(--safe-bottom));
+    }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 14px 24px;
+    }
+
+    /* Sticky header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      margin: 0 -14px;
+      padding: calc(10px + var(--safe-top)) 14px 10px;
+      background: rgba(11, 15, 20, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .brand h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 2px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+      min-height: 44px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meta-pill strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--dim);
+      flex-shrink: 0;
+    }
+    .dot.live { background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+    .dot.error { background: var(--red); box-shadow: 0 0 0 4px var(--red-soft); }
+    .dot.loading { background: var(--amber); animation: pulse 1.2s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    button#refreshBtn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #1e293b, #162032);
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0 18px;
+      min-height: 44px;
+      min-width: 72px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    button#refreshBtn:active { transform: scale(0.97); }
+    button#refreshBtn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Install hint */
+    .install-hint {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 12px 0 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(59, 130, 246, 0.28);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .install-hint.show { display: flex; }
+    .install-hint span { flex: 1; }
+    .install-hint button {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 1.1rem;
+      line-height: 1;
+      min-width: 44px;
+      min-height: 44px;
+      cursor: pointer;
+      touch-action: manipulation;
+      margin: -8px -6px -8px 0;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 14px 0 12px;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-card.pnl-hero {
+      grid-column: 1 / -1;
+      padding: 16px 16px 14px;
+    }
+
+    .summary-card .label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .value {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      word-break: break-all;
+    }
+
+    .summary-card.pnl-hero .value {
+      font-size: 1.65rem;
+      line-height: 1.2;
+    }
+
+    .summary-card .sub {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--dim);
+    }
+
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .flat { color: var(--muted); }
+
+    .fx-note {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .fx-note.warn {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .positions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 10px;
+    }
+
+    .card .pos-head {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .pos-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .pos-ticker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-soft);
+      font-size: 0.7rem;
+      color: var(--dim);
+      font-weight: 500;
+    }
+
+    .metric .k {
+      font-size: 0.7rem;
+      color: var(--dim);
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+
+    .metric .v {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric .v.lg { font-size: 1.12rem; }
+
+    .metric.pnl-block {
+      grid-column: 1 / -1;
+      background: var(--bg-elev);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .metric.pnl-block .v.lg {
+      font-size: 1.35rem;
+    }
+
+    .metric .s {
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    .status-row {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: var(--dim);
+      font-size: 0.75rem;
+    }
+
+    footer {
+      margin-top: 20px;
+      color: var(--dim);
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    .err-tag {
+      color: var(--amber);
+      font-size: 0.72rem;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 520px) {
+      .wrap { padding: 0 18px 28px; }
+      .app-header { margin: 0 -18px; padding-left: 18px; padding-right: 18px; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .brand h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app-header">
+      <div class="brand">
+        <h1>持仓跟踪</h1>
+        <p>极兔 · 拼多多 · 标普500（SPY） · 每 15 分钟刷新</p>
+      </div>
+      <div class="toolbar">
+        <div class="meta-pill" id="statusPill">
+          <span class="dot loading" id="statusDot"></span>
+          <span id="statusText">加载中…</span>
+        </div>
+        <div class="meta-pill">下次 <strong id="countdown">--:--</strong></div>
+        <button type="button" id="refreshBtn">刷新</button>
+      </div>
+      <div class="install-hint" id="installHint" role="status">
+        <span>可添加到主屏幕当 App 用（Chrome 菜单 →「添加到主屏幕」）</span>
+        <button type="button" id="installHintClose" aria-label="关闭提示">×</button>
+      </div>
+    </header>
+
+    <div class="summary" id="summary">
+      <div class="summary-card pnl-hero">
+        <div class="label">浮动盈亏（USD）</div>
+        <div class="value" id="sumPnl">加载中</div>
+        <div class="sub" id="sumPnlPct">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">总成本（USD）</div>
+        <div class="value" id="sumCost">加载中</div>
+        <div class="sub" id="sumCostSub">含港股折算</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">总市值（USD）</div>
+        <div class="value" id="sumMv">加载中</div>
+        <div class="sub" id="sumMvSub">实时报价合计</div>
+      </div>
+      <div class="summary-card" style="grid-column: 1 / -1;">
+        <div class="label">汇率 USD/HKD</div>
+        <div class="value" id="sumFx">加载中</div>
+        <div class="sub" id="sumFxSub">Yahoo USDHKD=X</div>
+      </div>
+    </div>
+
+    <div id="fxNote" class="fx-note" style="display:none;"></div>
+
+    <div class="positions" id="positions"></div>
+
+    <div class="status-row">
+      <span>上次更新：<span id="lastUpdated">—</span>（上海时间）</span>
+      <span>数据源：本机 /api/quote → Yahoo · 报价可能有延迟</span>
+    </div>
+
+    <footer>
+      Danny 持仓 · H5 / PWA · 无 API Key
+    </footer>
+  </div>
+
+  <script>
+    const HOLDINGS = [
+      {
+        id: "jt",
+        name: "极兔速递",
+        ticker: "1519.HK",
+        yahoo: "1519.HK",
+        shares: 1_000_000,
+        avgCost: 9.0,
+        currency: "HKD",
+      },
+      {
+        id: "pdd",
+        name: "拼多多",
+        ticker: "PDD",
+        yahoo: "PDD",
+        shares: 500_000,
+        avgCost: 80.0,
+        currency: "USD",
+      },
+      {
+        id: "spy",
+        name: "标普500 / SPY",
+        ticker: "SPY",
+        yahoo: "SPY",
+        shares: 10_000,
+        avgCost: 600.0,
+        currency: "USD",
+      },
+    ];
+
+    const FX_SYMBOL = "USDHKD=X";
+    const REFRESH_MS = 15 * 60 * 1000;
+    /** 公共 CORS 代理（仅作备用；优先走本机 serve.py 的 /api/quote） */
+    const PROXY_BUILDERS = [
+      (u) => "https://cors.isomorphic-git.org/" + u,
+      (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+      (u) => "https://api.allorigins.win/get?url=" + encodeURIComponent(u),
+      (u) => "https://thingproxy.freeboard.io/fetch/" + u,
+      (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+    ];
+    const SERVE_HINT =
+      "请在本机运行 python3 serve.py，再用浏览器打开 http://本机IP:8765/（不要用 file:// 打开）";
+
+    /** @type {Record<string, any>} */
+    const lastGood = {};
+    let lastFx = null;
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let nextRefreshAt = 0;
+    let fetching = false;
+
+    const el = (id) => document.getElementById(id);
+
+    function fmtNum(n, digits = 2) {
+      if (n == null || Number.isNaN(n)) return "—";
+      return Number(n).toLocaleString("zh-CN", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      });
+    }
+
+    function fmtMoney(n, currency, digits = 2) {
+      if (n == null || Number.isNaN(n)) return "—";
+      const prefix = currency === "HKD" ? "HK$" : currency === "USD" ? "$" : "";
+      const sign = n < 0 ? "-" : "";
+      return sign + prefix + fmtNum(Math.abs(n), digits);
+    }
+
+    function fmtPct(n) {
+      if (n == null || Number.isNaN(n)) return "—";
+      const sign = n > 0 ? "+" : "";
+      return sign + fmtNum(n, 2) + "%";
+    }
+
+    function pnlClass(n) {
+      if (n == null || Number.isNaN(n) || n === 0) return "flat";
+      return n > 0 ? "up" : "down";
+    }
+
+    function shanghaiNow() {
+      return new Date().toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }) + " CST";
+    }
+
+    function yahooUrl(symbol) {
+      return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    }
+
+    async function fetchJson(url) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      try {
+        const res = await fetch(url, {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+          signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data && typeof data.contents === "string") {
+          return JSON.parse(data.contents);
+        }
+        return data;
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    function localApiUrl(symbol) {
+      // 同源代理：python3 serve.py 提供；file:// 下 location.origin 为 "null"，跳过
+      if (!location.protocol.startsWith("http")) return null;
+      return `${location.origin}/api/quote?symbol=${encodeURIComponent(symbol)}`;
+    }
+
+
+    async function loadStaticQuotes() {
+      try {
+        const res = await fetch("./data/quotes.json?t=" + Date.now(), {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || !data.quotes) return null;
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function applyStaticQuotes(bundle) {
+      const qmap = bundle.quotes || {};
+      let applied = 0;
+      for (const h of HOLDINGS) {
+        const row = qmap[h.yahoo];
+        if (!row || row.price == null || row.error) continue;
+        lastGood[h.id] = {
+          price: Number(row.price),
+          previousClose: row.previousClose != null ? Number(row.previousClose) : null,
+          changePct: row.changePct != null ? Number(row.changePct) : null,
+          currency: row.currency || h.currency,
+          asOf: new Date(),
+          error: false,
+          fetchedAt: new Date(),
+          source: "quotes.json",
+        };
+        applied += 1;
+      }
+      const fx = qmap["USDHKD=X"];
+      if (fx && fx.price != null && !fx.error) {
+        lastFx = { rate: Number(fx.price), error: false };
+      }
+      return applied;
+    }
+
+    async function fetchYahoo(symbol) {
+      const url = yahooUrl(symbol);
+      const attempts = [];
+      const local = localApiUrl(symbol);
+      if (local) attempts.push(local);
+      attempts.push(url);
+      for (const b of PROXY_BUILDERS) attempts.push(b(url));
+
+      let lastErr = null;
+      for (const attempt of attempts) {
+        try {
+          const data = await fetchJson(attempt);
+          if (data && data.chart && data.chart.result) return data;
+          lastErr = new Error("unexpected JSON shape");
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw new Error(
+        `${symbol}: 行情获取失败 (${lastErr && lastErr.message})。${SERVE_HINT}`
+      );
+    }
+
+    function parseQuote(json) {
+      const result = json && json.chart && json.chart.result && json.chart.result[0];
+      if (!result || !result.meta) throw new Error("无效行情数据");
+      const meta = result.meta;
+      const price = meta.regularMarketPrice;
+      if (price == null || Number.isNaN(Number(price))) throw new Error("无现价");
+      let prev = meta.previousClose;
+      if (prev == null) prev = meta.chartPreviousClose;
+      let changePct = meta.regularMarketChangePercent;
+      if ((changePct == null || Number.isNaN(Number(changePct))) && prev != null && prev !== 0) {
+        changePct = ((price - prev) / prev) * 100;
+      }
+      return {
+        price: Number(price),
+        previousClose: prev != null ? Number(prev) : null,
+        changePct: changePct != null ? Number(changePct) : null,
+        currency: meta.currency || null,
+        asOf: meta.regularMarketTime
+          ? new Date(meta.regularMarketTime * 1000)
+          : new Date(),
+      };
+    }
+
+    function setStatus(kind, text) {
+      const dot = el("statusDot");
+      dot.className = "dot " + kind;
+      el("statusText").textContent = text;
+    }
+
+    function renderCards() {
+      const root = el("positions");
+      root.innerHTML = HOLDINGS.map((h) => {
+        const q = lastGood[h.id];
+        const loading = !q;
+        const price = q ? q.price : null;
+        const changePct = q ? q.changePct : null;
+        const costBasis = h.shares * h.avgCost;
+        const mv = price != null ? h.shares * price : null;
+        const pnl = mv != null ? mv - costBasis : null;
+        const pnlPct = pnl != null && costBasis ? (pnl / costBasis) * 100 : null;
+        const stale = q && q.error ? `<div class="err-tag">报价更新失败，显示上次成功数据</div>` : "";
+
+        return `
+          <article class="card" data-id="${h.id}">
+            <div class="pos-head">
+              <div class="pos-name">${h.name}</div>
+              <div class="pos-ticker">
+                <span>${h.ticker}</span>
+                <span class="badge">${h.currency}</span>
+              </div>
+              ${stale}
+            </div>
+            <div class="metric">
+              <div class="k">持仓 / 成本价</div>
+              <div class="v">${fmtNum(h.shares, 0)} 股</div>
+              <div class="s">${fmtMoney(h.avgCost, h.currency)} / 股</div>
+            </div>
+            <div class="metric">
+              <div class="k">最新价 / 日涨跌</div>
+              <div class="v lg ${loading ? "" : pnlClass(changePct)}">${loading ? "加载中" : fmtMoney(price, h.currency, 3)}</div>
+              <div class="s ${loading ? "" : pnlClass(changePct)}">${loading ? "—" : fmtPct(changePct)}</div>
+            </div>
+            <div class="metric">
+              <div class="k">市值 / 成本</div>
+              <div class="v">${loading ? "加载中" : fmtMoney(mv, h.currency)}</div>
+              <div class="s">${fmtMoney(costBasis, h.currency)}</div>
+            </div>
+            <div class="metric pnl-block">
+              <div class="k">浮动盈亏</div>
+              <div class="v lg ${loading ? "" : pnlClass(pnl)}">${loading ? "加载中" : fmtMoney(pnl, h.currency)}</div>
+              <div class="s ${loading ? "" : pnlClass(pnlPct)}">${loading ? "—" : fmtPct(pnlPct)}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderSummary() {
+      const fx = lastFx && lastFx.rate != null ? lastFx.rate : null;
+      const fxNote = el("fxNote");
+
+      let totalCostUsd = 0;
+      let totalMvUsd = 0;
+      let allReady = true;
+      let hkdMissingFx = false;
+
+      for (const h of HOLDINGS) {
+        const q = lastGood[h.id];
+        if (!q || q.price == null) {
+          allReady = false;
+          continue;
+        }
+        const cost = h.shares * h.avgCost;
+        const mv = h.shares * q.price;
+        if (h.currency === "HKD") {
+          if (fx) {
+            totalCostUsd += cost / fx;
+            totalMvUsd += mv / fx;
+          } else {
+            hkdMissingFx = true;
+          }
+        } else {
+          totalCostUsd += cost;
+          totalMvUsd += mv;
+        }
+      }
+
+      if (!allReady && Object.keys(lastGood).length === 0) {
+        el("sumCost").textContent = "加载中";
+        el("sumMv").textContent = "加载中";
+        el("sumPnl").textContent = "加载中";
+        el("sumPnlPct").textContent = "—";
+        el("sumFx").textContent = "加载中";
+        return;
+      }
+
+      if (hkdMissingFx) {
+        let usdCost = 0, usdMv = 0, hkdCost = 0, hkdMv = 0;
+        for (const h of HOLDINGS) {
+          const q = lastGood[h.id];
+          if (!q) continue;
+          const cost = h.shares * h.avgCost;
+          const mv = h.shares * q.price;
+          if (h.currency === "HKD") {
+            hkdCost += cost;
+            hkdMv += mv;
+          } else {
+            usdCost += cost;
+            usdMv += mv;
+          }
+        }
+        const usdPnl = usdMv - usdCost;
+        el("sumCost").textContent = fmtMoney(usdCost, "USD");
+        el("sumMv").textContent = fmtMoney(usdMv, "USD");
+        el("sumPnl").textContent = fmtMoney(usdPnl, "USD");
+        el("sumPnl").className = "value " + pnlClass(usdPnl);
+        el("sumPnlPct").textContent = usdCost ? fmtPct((usdPnl / usdCost) * 100) : "—";
+        el("sumPnlPct").className = "sub " + pnlClass(usdPnl);
+        el("sumCostSub").textContent = "仅 USD 标的（极兔未折算）";
+        el("sumMvSub").textContent = `另：极兔成本 ${fmtMoney(hkdCost, "HKD")} / 市值 ${fmtMoney(hkdMv, "HKD")}`;
+        el("sumFx").textContent = "不可用";
+        el("sumFxSub").textContent = "无法获取汇率，分币种展示";
+        fxNote.style.display = "block";
+        fxNote.className = "fx-note warn";
+        fxNote.textContent = "汇率 USD/HKD 暂不可用：组合合计仅含美元标的；极兔以港币单独显示。";
+      } else {
+        const pnl = totalMvUsd - totalCostUsd;
+        el("sumCost").textContent = fmtMoney(totalCostUsd, "USD");
+        el("sumMv").textContent = fmtMoney(totalMvUsd, "USD");
+        el("sumPnl").textContent = fmtMoney(pnl, "USD");
+        el("sumPnl").className = "value " + pnlClass(pnl);
+        el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
+        el("sumPnlPct").className = "sub " + pnlClass(pnl);
+        el("sumCostSub").textContent = fx ? `含极兔按 ${fmtNum(fx, 4)} 折算` : "含港股折算";
+        el("sumMvSub").textContent = "实时报价合计（USD）";
+        el("sumFx").textContent = fx != null ? fmtNum(fx, 4) : "—";
+        el("sumFxSub").textContent = "Yahoo USDHKD=X · 1 USD = x HKD";
+        fxNote.style.display = "block";
+        fxNote.className = "fx-note";
+        fxNote.textContent = `组合汇总已将极兔（HKD）按 USD/HKD ≈ ${fmtNum(fx, 4)} 折算为美元。`;
+      }
+    }
+
+    async function refreshAll(manual = false) {
+      if (fetching) return;
+      fetching = true;
+      el("refreshBtn").disabled = true;
+      setStatus("loading", manual ? "手动刷新中…" : "更新行情中…");
+
+      const errors = [];
+
+      // GitHub Pages: prefer same-origin data/quotes.json (updated by Actions)
+      const staticBundle = await loadStaticQuotes();
+      if (staticBundle) {
+        const n = applyStaticQuotes(staticBundle);
+        if (n > 0) {
+          renderCards();
+          renderSummary();
+          el("lastUpdated").textContent = staticBundle.updatedAt
+            ? String(staticBundle.updatedAt).replace("T", " ").slice(0, 19) + " CST"
+            : shanghaiNow();
+          setStatus("ok", "已从 quotes.json 更新（Actions 约每 15 分钟）");
+          fetching = false;
+          el("refreshBtn").disabled = false;
+          scheduleNext();
+          return;
+        }
+      }
+
+      await Promise.all(
+        HOLDINGS.map(async (h) => {
+          try {
+            const json = await fetchYahoo(h.yahoo);
+            const quote = parseQuote(json);
+            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date() };
+          } catch (err) {
+            errors.push(h.ticker);
+            if (lastGood[h.id]) {
+              lastGood[h.id] = { ...lastGood[h.id], error: true };
+            }
+          }
+        })
+      );
+
+      try {
+        const fxJson = await fetchYahoo(FX_SYMBOL);
+        const fxQuote = parseQuote(fxJson);
+        lastFx = { rate: fxQuote.price, fetchedAt: new Date(), error: false };
+      } catch (err) {
+        if (lastFx) lastFx = { ...lastFx, error: true };
+        else lastFx = null;
+        errors.push("汇率");
+      }
+
+      renderCards();
+      renderSummary();
+      el("lastUpdated").textContent = shanghaiNow();
+
+      if (errors.length === HOLDINGS.length + 1 && Object.keys(lastGood).length === 0) {
+        setStatus("error", "全部报价获取失败");
+        const note = el("fxNote");
+        note.style.display = "block";
+        note.className = "fx-note warn";
+        note.textContent =
+          "行情无法更新。" + SERVE_HINT +
+          "。电脑与手机需同一 Wi‑Fi；端口默认 8765。";
+      } else if (errors.length) {
+        setStatus("error", `部分失败：${errors.join("、")}（保留上次成功数据）`);
+      } else {
+        setStatus("live", "行情已更新");
+      }
+
+      fetching = false;
+      el("refreshBtn").disabled = false;
+      scheduleNext();
+    }
+
+    function updateCountdown() {
+      const left = Math.max(0, nextRefreshAt - Date.now());
+      const sec = Math.ceil(left / 1000);
+      const m = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      el("countdown").textContent = `${m}:${s}`;
+    }
+
+    function scheduleNext() {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+      nextRefreshAt = Date.now() + REFRESH_MS;
+      updateCountdown();
+      countdownTimer = setInterval(updateCountdown, 1000);
+      refreshTimer = setTimeout(() => refreshAll(false), REFRESH_MS);
+    }
+
+    /* Install hint */
+    function isStandalone() {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+      );
+    }
+
+    function maybeShowInstallHint() {
+      const dismissed = localStorage.getItem("portfolio-h5-install-hint-dismissed");
+      if (dismissed || isStandalone()) return;
+      el("installHint").classList.add("show");
+    }
+
+    el("installHintClose").addEventListener("click", () => {
+      el("installHint").classList.remove("show");
+      localStorage.setItem("portfolio-h5-install-hint-dismissed", "1");
+    });
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      maybeShowInstallHint();
+    });
+
+    maybeShowInstallHint();
+
+    /* Service worker */
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
+    el("refreshBtn").addEventListener("click", () => refreshAll(true));
+
+    renderCards();
+    renderSummary();
+    refreshAll(false);
+  </script>
+</body>
+</html>
