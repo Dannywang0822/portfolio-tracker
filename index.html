@@ -1233,26 +1233,85 @@
         .replace(/'/g, "&#39;");
     }
 
+    const ACCOUNT_ALIASES = {
+      futu: "futu",
+      pingan: "pingan",
+      winglung: "winglung",
+      citic: "citic",
+      "富途": "futu",
+      "平安": "pingan",
+      "平安证券": "pingan",
+      "招商永隆": "winglung",
+      "永隆": "winglung",
+      "中信": "citic",
+      "中信国际": "citic",
+    };
+
+    function normalizeAccount(raw) {
+      const key = String(raw || "").trim();
+      if (!key) return "futu";
+      if (ACCOUNT_ALIASES[key]) return ACCOUNT_ALIASES[key];
+      const lower = key.toLowerCase();
+      if (ACCOUNT_ALIASES[lower]) return ACCOUNT_ALIASES[lower];
+      return "futu";
+    }
+
+    function resolveHoldingYahoo(h) {
+      const currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
+      let y = normalizeYahooSymbol(h.yahoo || h.ticker, currency);
+      // 常见误填：SZ300629 / 300629SZ / 深圳300629
+      const m = String(y || "").toUpperCase().match(/^(?:SZ|SH)?(\d{6})(?:\.?(?:SZ|SS))?$/);
+      if (m && !/\.(SZ|SS|HK)$/.test(y)) {
+        const code = m[1];
+        if (currency === "CNY" || !currency) {
+          y = normalizeYahooSymbol(code, "CNY");
+        }
+      }
+      // 与内置持仓同名或同代码时，直接复用内置 Yahoo 代码（例如手动永隆「新劲刚」→ 300629.SZ）
+      const built = HOLDINGS.find(
+        (b) =>
+          b.yahoo === y ||
+          b.ticker === y ||
+          b.name === h.name ||
+          (b.ticker && y && b.ticker.replace(/\.(SZ|SS|HK)$/i, "") === y.replace(/\.(SZ|SS|HK)$/i, ""))
+      );
+      if (built) y = built.yahoo;
+      return y;
+    }
+
     function loadCustomHoldings() {
       try {
         const raw = localStorage.getItem(CUSTOM_KEY);
         if (!raw) return [];
         const arr = JSON.parse(raw);
         if (!Array.isArray(arr)) return [];
-        return arr
-          .filter((h) => h && h.id && h.yahoo && h.name)
-          .map((h) => ({
-            id: String(h.id),
-            name: String(h.name),
-            ticker: String(h.ticker || h.yahoo),
-            yahoo: String(h.yahoo).trim(),
-            shares: Number(h.shares) || 0,
-            avgCost: Number(h.avgCost) || 0,
-            currency: h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD",
-            account: ["futu", "pingan", "winglung", "citic"].includes(h.account) ? h.account : "futu",
-            market: h.market || MARKET_FROM_CURRENCY[h.currency] || "us",
-            custom: true,
-          }));
+        let changed = false;
+        const list = arr
+          .filter((h) => h && h.id && (h.yahoo || h.ticker) && h.name)
+          .map((h) => {
+            const currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
+            const account = normalizeAccount(h.account);
+            const yahoo = resolveHoldingYahoo({ ...h, currency });
+            if (String(h.yahoo).trim() !== yahoo || normalizeAccount(h.account) !== account) changed = true;
+            return {
+              id: String(h.id),
+              name: String(h.name),
+              ticker: yahoo,
+              yahoo,
+              shares: Number(h.shares) || 0,
+              avgCost: Number(h.avgCost) || 0,
+              currency,
+              account,
+              market: MARKET_FROM_CURRENCY[currency] || "us",
+              custom: true,
+            };
+          });
+        if (changed) {
+          try {
+            localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+          } catch (e) { /* ignore */ }
+        }
+        return list;
       } catch (e) {
         return [];
       }
@@ -1292,10 +1351,13 @@
     function normalizeYahooSymbol(raw, currency) {
       let s = String(raw || "").trim().toUpperCase();
       if (!s) return s;
+      s = s.replace(/^SH(\d{6})$/, "$1.SS").replace(/^SZ(\d{6})$/, "$1.SZ");
+      s = s.replace(/^(\d{6})\.(SH|SS)$/, "$1.SS").replace(/^(\d{6})\.SZ$/, "$1.SZ");
       if (s.includes("=") || /\.(HK|SS|SZ|NY|TO|L|T|AX|KQ|KS)$/i.test(s)) return s;
       if (/^\d{1,6}$/.test(s)) {
         if (currency === "HKD") return s.padStart(4, "0") + ".HK";
-        if (currency === "CNY" && s.length === 6) {
+        // A股：无币种时也尽量补后缀（手动新增常漏选 CNY）
+        if ((currency === "CNY" || !currency || currency === "USD") && s.length === 6) {
           if ("569".includes(s[0])) return s + ".SS";
           return s + ".SZ";
         }
@@ -1468,11 +1530,29 @@
       }
     }
 
+    function lookupQuoteRow(qmap, yahoo, currency) {
+      if (!qmap || !yahoo) return null;
+      const candidates = [];
+      const y = String(yahoo).trim();
+      candidates.push(y, y.toUpperCase());
+      const norm = normalizeYahooSymbol(y, currency);
+      if (norm) candidates.push(norm);
+      const bare = y.replace(/\.(SZ|SS|HK)$/i, "");
+      if (/^\d{6}$/.test(bare)) {
+        candidates.push(bare + ".SZ", bare + ".SS");
+      }
+      for (const key of candidates) {
+        const row = qmap[key];
+        if (row && row.price != null && !row.error) return row;
+      }
+      return null;
+    }
+
     function applyStaticQuotes(bundle) {
       const qmap = bundle.quotes || {};
       let applied = 0;
       for (const h of allHoldings()) {
-        const row = qmap[h.yahoo];
+        const row = lookupQuoteRow(qmap, h.yahoo, h.currency);
         if (!row || row.price == null || row.error) continue;
         lastGood[h.id] = {
           price: Number(row.price),
@@ -2064,11 +2144,21 @@
     el("holdingForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = el("hmName").value.trim();
-      const currency = el("hmCurrency").value;
-      const yahoo = normalizeYahooSymbol(el("hmYahoo").value, currency);
+      let currency = el("hmCurrency").value;
+      const rawYahoo = el("hmYahoo").value.trim();
+      // 六位 A 股代码若仍选着默认 USD，自动改成 CNY，避免市场筛选/后缀推断错误
+      if (/^(SZ|SH)?\d{6}(\.(SZ|SS))?$/i.test(rawYahoo) && currency === "USD") {
+        currency = "CNY";
+        el("hmCurrency").value = "CNY";
+      }
+      if (/^\d{1,5}(\.HK)?$/i.test(rawYahoo) && currency === "USD" && /\.HK$/i.test(rawYahoo)) {
+        currency = "HKD";
+        el("hmCurrency").value = "HKD";
+      }
+      const yahoo = resolveHoldingYahoo({ name, yahoo: rawYahoo, ticker: rawYahoo, currency });
       const shares = Number(el("hmShares").value);
       const avgCost = Number(el("hmAvgCost").value);
-      const account = el("hmAccount").value;
+      const account = normalizeAccount(el("hmAccount").value);
       const err = el("hmError");
       if (!name || !yahoo) {
         err.textContent = "请填写名称和代码";
