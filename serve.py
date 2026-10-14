@@ -152,7 +152,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             results = {}
             errors = {}
-            for sym in symbols[:20]:
+            for sym in symbols[:40]:
                 status, body, _ = fetch_yahoo(sym)
                 try:
                     data = json.loads(body.decode("utf-8"))
