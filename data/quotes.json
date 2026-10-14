@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-14T22:02:50.823512+08:00",
+  "updatedAt": "2026-10-14T22:22:24.156777+08:00",
   "quotes": {
     "1519.HK": {
       "price": 8.925,
@@ -8,21 +8,21 @@
       "currency": "HKD"
     },
     "PDD": {
-      "price": 81.64,
+      "price": 81.54,
       "previousClose": 81.96,
-      "changePct": -0.39,
+      "changePct": -0.513,
       "currency": "USD"
     },
     "SPY": {
-      "price": 773.52,
+      "price": 773.2,
       "previousClose": 778.01,
-      "changePct": -0.577,
+      "changePct": -0.618,
       "currency": "USD"
     },
     "USDHKD=X": {
-      "price": 7.8482,
+      "price": 7.8483,
       "previousClose": 7.8473,
-      "changePct": 0.0113,
+      "changePct": 0.0127,
       "currency": "HKD"
     }
   }
