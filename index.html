@@ -678,7 +678,7 @@
       .summary-card.fx-card { display: none; }
       .toolbar { gap: 6px; }
       .meta-pill { padding: 6px 10px; min-height: 40px; font-size: 0.75rem; }
-      button#refreshBtn, button#logoutBtn { min-height: 40px; }
+      button#refreshBtn, button#addHoldingBtn, button#logoutBtn { min-height: 40px; }
     }
 
     button#addHoldingBtn {
@@ -687,17 +687,16 @@
       background: var(--accent-soft);
       color: var(--text);
       font: inherit;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 600;
       padding: 8px 12px;
-      min-height: 36px;
+      min-height: 44px;
       border-radius: 999px;
       cursor: pointer;
       touch-action: manipulation;
       white-space: nowrap;
     }
     button#addHoldingBtn:active { transform: scale(0.97); }
-    .sort-row .add-wrap { margin-left: auto; display: flex; align-items: center; }
     .holding-modal {
       position: fixed; inset: 0; z-index: 200;
       display: flex; align-items: flex-end; justify-content: center;
@@ -805,6 +804,7 @@
         </div>
         <div class="meta-pill">下次 <strong id="countdown">--:--</strong></div>
         <button type="button" id="refreshBtn">刷新</button>
+        <button type="button" id="addHoldingBtn">＋新增</button>
         <button type="button" id="logoutBtn" title="退出登录">退出</button>
       </div>
       <div class="install-hint" id="installHint" role="status">
@@ -876,9 +876,6 @@
           <option value="day">日涨跌</option>
         </select>
         <span class="pos-count" id="posCount"></span>
-        <div class="add-wrap">
-          <button type="button" id="addHoldingBtn">＋新增</button>
-        </div>
       </div>
     </div>
 
