@@ -1,7 +1,7 @@
 {
   "name": "持仓跟踪",
   "short_name": "持仓",
-  "description": "极兔 · 拼多多 · 标普500 持仓跟踪，每 15 分钟自动刷新",
+  "description": "多账户持仓跟踪（含平安证券），手机 H5 / PWA，约每 15 分钟刷新",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

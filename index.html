@@ -483,6 +483,142 @@
     button#logoutBtn:active { transform: scale(0.97); }
     #appRoot[hidden] { display: none !important; }
 
+    /* H5: filter / sort bar */
+    .view-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0 0 12px;
+      position: sticky;
+      top: calc(var(--header-h) + var(--safe-top));
+      z-index: 30;
+      padding: 8px 0 6px;
+      background: linear-gradient(180deg, rgba(11,15,20,0.96) 70%, rgba(11,15,20,0));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .chip-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .chip {
+      appearance: none;
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      min-height: 36px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+    .chip.active {
+      background: var(--accent-soft);
+      border-color: rgba(59, 130, 246, 0.45);
+      color: var(--text);
+    }
+    .sort-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--dim);
+      font-size: 0.72rem;
+    }
+    .sort-row select {
+      appearance: none;
+      flex: 1;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 8px 12px;
+      min-height: 36px;
+      border-radius: 10px;
+      outline: none;
+    }
+    .pos-count {
+      color: var(--dim);
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* Sticky mini PnL while scrolling holdings */
+    .sticky-pnl {
+      display: none;
+      position: sticky;
+      top: calc(var(--header-h) + var(--safe-top) + 4px);
+      z-index: 35;
+      margin: 0 0 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(22, 29, 39, 0.94);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sticky-pnl.show { display: flex; }
+    .sticky-pnl .k { font-size: 0.72rem; color: var(--muted); }
+    .sticky-pnl .v {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .sticky-pnl .s {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .badge.mkt-CNY { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); }
+    .badge.mkt-HKD { color: #60a5fa; border-color: rgba(96, 165, 250, 0.35); }
+    .badge.mkt-USD { color: #34d399; border-color: rgba(52, 211, 153, 0.35); }
+
+    /* Denser cards for long lists on phone */
+    @media (max-width: 519px) {
+      .card {
+        padding: 12px;
+        gap: 10px 8px;
+      }
+      .pos-name { font-size: 0.98rem; }
+      .metric .v { font-size: 0.88rem; }
+      .metric .v.lg { font-size: 1.02rem; }
+      .metric.pnl-block { padding: 8px 10px; }
+      .metric.pnl-block .v.lg { font-size: 1.18rem; }
+      .summary-card .value { font-size: 1.02rem; }
+      .summary-card.pnl-hero .value { font-size: 1.45rem; }
+      .toolbar { gap: 6px; }
+      .meta-pill { padding: 6px 10px; min-height: 40px; font-size: 0.75rem; }
+      button#refreshBtn, button#logoutBtn { min-height: 40px; }
+    }
+
+    .empty-filter {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--dim);
+      font-size: 0.85rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+    }
+
   </style>
 </head>
 <body>
@@ -555,6 +691,35 @@
     </div>
 
     <div id="fxNote" class="fx-note" style="display:none;"></div>
+
+
+    <div class="sticky-pnl" id="stickyPnl" aria-live="polite">
+      <div>
+        <div class="k">浮动盈亏（USD）</div>
+        <div class="v" id="stickyPnlVal">—</div>
+      </div>
+      <div class="s" id="stickyPnlPct">—</div>
+    </div>
+
+    <div class="view-bar" id="viewBar">
+      <div class="chip-row" role="tablist" aria-label="市场筛选">
+        <button type="button" class="chip active" data-filter="all">全部</button>
+        <button type="button" class="chip" data-filter="CNY">A股</button>
+        <button type="button" class="chip" data-filter="HKD">港股</button>
+        <button type="button" class="chip" data-filter="USD">美股</button>
+      </div>
+      <div class="sort-row">
+        <label for="sortSelect">排序</label>
+        <select id="sortSelect">
+          <option value="default">默认顺序</option>
+          <option value="pnl">盈亏金额</option>
+          <option value="pnlPct">盈亏比例</option>
+          <option value="mv">市值</option>
+          <option value="day">日涨跌</option>
+        </select>
+        <span class="pos-count" id="posCount"></span>
+      </div>
+    </div>
 
     <div class="positions" id="positions"></div>
 
@@ -916,18 +1081,102 @@
       el("statusText").textContent = text;
     }
 
+    function fxRateFor(currency) {
+      if (!lastFx) return null;
+      if (currency === "HKD") return lastFx.hkd != null ? lastFx.hkd : null;
+      if (currency === "CNY") return lastFx.cny != null ? lastFx.cny : null;
+      return null;
+    }
+
+    function toUsd(amount, currency) {
+      if (currency === "USD") return amount;
+      const rate = fxRateFor(currency);
+      if (rate == null || rate === 0) return null;
+      return amount / rate;
+    }
+
+    const viewState = { filter: "all", sort: "default" };
+
+    function marketLabel(currency) {
+      if (currency === "CNY") return "A股";
+      if (currency === "HKD") return "港股";
+      if (currency === "USD") return "美股";
+      return currency;
+    }
+
+    function holdingMetrics(h) {
+      const q = lastGood[h.id];
+      const loading = !q;
+      const price = q ? q.price : null;
+      const changePct = q ? q.changePct : null;
+      const costBasis = h.shares * h.avgCost;
+      const mv = price != null ? h.shares * price : null;
+      const pnl = mv != null ? mv - costBasis : null;
+      const pnlPct = pnl != null && costBasis ? (pnl / costBasis) * 100 : null;
+      const mvUsd = mv != null ? toUsd(mv, h.currency) : null;
+      const pnlUsd = pnl != null ? toUsd(pnl, h.currency) : null;
+      return { q, loading, price, changePct, costBasis, mv, pnl, pnlPct, mvUsd, pnlUsd };
+    }
+
+    function visibleHoldings() {
+      let list = HOLDINGS.slice();
+      if (viewState.filter !== "all") {
+        list = list.filter((h) => h.currency === viewState.filter);
+      }
+      const sortKey = viewState.sort;
+      if (sortKey !== "default") {
+        list.sort((a, b) => {
+          const ma = holdingMetrics(a);
+          const mb = holdingMetrics(b);
+          const av =
+            sortKey === "pnl" ? (ma.pnlUsd != null ? ma.pnlUsd : ma.pnl) :
+            sortKey === "pnlPct" ? ma.pnlPct :
+            sortKey === "mv" ? (ma.mvUsd != null ? ma.mvUsd : ma.mv) :
+            sortKey === "day" ? ma.changePct : null;
+          const bv =
+            sortKey === "pnl" ? (mb.pnlUsd != null ? mb.pnlUsd : mb.pnl) :
+            sortKey === "pnlPct" ? mb.pnlPct :
+            sortKey === "mv" ? (mb.mvUsd != null ? mb.mvUsd : mb.mv) :
+            sortKey === "day" ? mb.changePct : null;
+          const an = av == null || Number.isNaN(av) ? -Infinity : av;
+          const bn = bv == null || Number.isNaN(bv) ? -Infinity : bv;
+          return bn - an;
+        });
+      }
+      return list;
+    }
+
+    function syncStickyPnl() {
+      const sticky = el("stickyPnl");
+      const hero = document.querySelector(".summary-card.pnl-hero");
+      if (!sticky || !hero) return;
+      const rect = hero.getBoundingClientRect();
+      const show = rect.bottom < 72;
+      sticky.classList.toggle("show", show);
+      if (!show) return;
+      sticky.querySelector(".v").textContent = el("sumPnl").textContent;
+      sticky.querySelector(".v").className = "v " + el("sumPnl").className.replace("value", "").trim();
+      el("stickyPnlPct").textContent = el("sumPnlPct").textContent;
+      el("stickyPnlPct").className = "s " + el("sumPnlPct").className.replace("sub", "").trim();
+    }
+
     function renderCards() {
       const root = el("positions");
-      root.innerHTML = HOLDINGS.map((h) => {
-        const q = lastGood[h.id];
-        const loading = !q;
-        const price = q ? q.price : null;
-        const changePct = q ? q.changePct : null;
-        const costBasis = h.shares * h.avgCost;
-        const mv = price != null ? h.shares * price : null;
-        const pnl = mv != null ? mv - costBasis : null;
-        const pnlPct = pnl != null && costBasis ? (pnl / costBasis) * 100 : null;
+      const list = visibleHoldings();
+      const countEl = el("posCount");
+      if (countEl) {
+        countEl.textContent = list.length === HOLDINGS.length
+          ? `${list.length} 只`
+          : `${list.length} / ${HOLDINGS.length}`;
+      }
+      if (!list.length) {
+        root.innerHTML = `<div class="empty-filter">该筛选下暂无持仓</div>`;
+        return;
+      }
+      root.innerHTML = list.map((h) => {
+        const { q, loading, price, changePct, costBasis, mv, pnl, pnlPct } = holdingMetrics(h);
         const stale = q && q.error ? `<div class="err-tag">报价更新失败，显示上次成功数据</div>` : "";
+        const mkt = marketLabel(h.currency);
 
         return `
           <article class="card" data-id="${h.id}">
@@ -935,6 +1184,7 @@
               <div class="pos-name">${h.name}</div>
               <div class="pos-ticker">
                 <span>${h.ticker}</span>
+                <span class="badge mkt-${h.currency}">${mkt}</span>
                 <span class="badge">${h.currency}</span>
               </div>
               ${stale}
@@ -962,20 +1212,7 @@
           </article>
         `;
       }).join("");
-    }
-
-    function fxRateFor(currency) {
-      if (!lastFx) return null;
-      if (currency === "HKD") return lastFx.hkd != null ? lastFx.hkd : null;
-      if (currency === "CNY") return lastFx.cny != null ? lastFx.cny : null;
-      return null;
-    }
-
-    function toUsd(amount, currency) {
-      if (currency === "USD") return amount;
-      const rate = fxRateFor(currency);
-      if (rate == null || rate === 0) return null;
-      return amount / rate;
+      syncStickyPnl();
     }
 
     function renderSummary() {
@@ -1059,6 +1296,7 @@
           ? `组合汇总已将非美元持仓折算为美元（${bits.join("；")}）。`
           : "组合汇总为美元。";
       }
+      syncStickyPnl();
     }
 
     async function refreshAll(manual = false) {
@@ -1212,9 +1450,14 @@
     function showApp() {
       el("loginGate").hidden = true;
       el("appRoot").hidden = false;
+      const header = document.querySelector(".app-header");
+      if (header) {
+        document.documentElement.style.setProperty("--header-h", header.offsetHeight + "px");
+      }
       renderCards();
       renderSummary();
       refreshAll(false);
+      requestAnimationFrame(syncStickyPnl);
     }
 
     function showLogin() {
@@ -1251,6 +1494,22 @@
 
     el("logoutBtn").addEventListener("click", logout);
     el("refreshBtn").addEventListener("click", () => refreshAll(true));
+
+    document.querySelectorAll(".chip[data-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        viewState.filter = btn.getAttribute("data-filter") || "all";
+        document.querySelectorAll(".chip[data-filter]").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+        renderCards();
+      });
+    });
+    el("sortSelect").addEventListener("change", (e) => {
+      viewState.sort = e.target.value || "default";
+      renderCards();
+    });
+    window.addEventListener("scroll", syncStickyPnl, { passive: true });
+
 
     if (isLoggedIn()) {
       showApp();
