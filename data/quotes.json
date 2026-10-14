@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-14T23:29:12.505842+08:00",
+  "updatedAt": "2026-10-14T23:29:33.515553+08:00",
   "quotes": {
     "PDD": {
       "price": 81.645,
@@ -8,9 +8,9 @@
       "currency": "USD"
     },
     "COIN": {
-      "price": 174.905,
+      "price": 174.875,
       "previousClose": 181.79,
-      "changePct": -3.787,
+      "changePct": -3.804,
       "currency": "USD"
     },
     "NVO": {
@@ -20,15 +20,15 @@
       "currency": "USD"
     },
     "CAG": {
-      "price": 13.77,
+      "price": 13.776,
       "previousClose": 13.7,
-      "changePct": 0.511,
+      "changePct": 0.553,
       "currency": "USD"
     },
     "TSLA": {
-      "price": 367.18,
+      "price": 367.11,
       "previousClose": 375.23,
-      "changePct": -2.145,
+      "changePct": -2.164,
       "currency": "USD"
     },
     "0700.HK": {
