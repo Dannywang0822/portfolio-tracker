@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-SYMBOLS = ["PDD", "0700.HK", "0981.HK", "1519.HK", "9992.HK", "000009.SZ", "002501.SZ", "002828.SZ", "161033.SZ", "300405.SZ", "300629.SZ", "510150.SS", "513500.SS", "515000.SS", "515030.SS", "515710.SS", "600519.SS", "601012.SS", "1119.HK", "USDHKD=X", "USDCNY=X"]
+SYMBOLS = ["PDD", "COIN", "NVO", "0700.HK", "0981.HK", "1519.HK", "9992.HK", "000009.SZ", "002501.SZ", "002828.SZ", "161033.SZ", "300405.SZ", "300629.SZ", "510150.SS", "513500.SS", "515000.SS", "515030.SS", "515710.SS", "600519.SS", "601012.SS", "1119.HK", "USDHKD=X", "USDCNY=X"]
 UA = "Mozilla/5.0 (compatible; PortfolioTracker/1.0)"
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "quotes.json"

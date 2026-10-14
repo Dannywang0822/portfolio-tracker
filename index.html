@@ -591,6 +591,10 @@
     .badge.mkt-HKD { color: #60a5fa; border-color: rgba(96, 165, 250, 0.35); }
     .badge.mkt-USD { color: #34d399; border-color: rgba(52, 211, 153, 0.35); }
 
+    .badge.acct-futu { color: #a78bfa; border-color: rgba(167, 139, 250, 0.4); }
+    .badge.acct-pingan { color: #f472b6; border-color: rgba(244, 114, 182, 0.4); }
+    .badge.acct-winglung { color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
+
     /* Denser cards for long lists on phone */
     @media (max-width: 519px) {
       .card {
@@ -645,7 +649,7 @@
     <header class="app-header">
       <div class="brand">
         <h1>持仓跟踪</h1>
-        <p>含平安证券等账户 · 每 15 分钟刷新</p>
+        <p>富途 / 平安 / 招商永隆 · 每 15 分钟刷新</p>
       </div>
       <div class="toolbar">
         <div class="meta-pill" id="statusPill">
@@ -743,6 +747,7 @@
         shares: 1_671,
         avgCost: 71.868,
         currency: "USD",
+        account: "futu",
       },
       {
         id: "tencent",
@@ -752,6 +757,7 @@
         shares: 100,
         avgCost: 611.70,
         currency: "HKD",
+        account: "futu",
       },
       {
         id: "smic",
@@ -761,6 +767,7 @@
         shares: 5_000,
         avgCost: 54.300,
         currency: "HKD",
+        account: "futu",
       },
       {
         id: "jt",
@@ -770,6 +777,7 @@
         shares: 57_400,
         avgCost: 10.821,
         currency: "HKD",
+        account: "futu",
       },
       {
         id: "popmart",
@@ -779,6 +787,37 @@
         shares: 2_400,
         avgCost: 154.50,
         currency: "HKD",
+        account: "futu",
+      },
+      {
+        id: "coinbase",
+        name: "Coinbase",
+        ticker: "COIN",
+        yahoo: "COIN",
+        shares: 800,
+        avgCost: 244.470,
+        currency: "USD",
+        account: "winglung",
+      },
+      {
+        id: "novo",
+        name: "Novo Nordisk",
+        ticker: "NVO",
+        yahoo: "NVO",
+        shares: 5_000,
+        avgCost: 38.830,
+        currency: "USD",
+        account: "winglung",
+      },
+      {
+        id: "pdd-winglung",
+        name: "拼多多",
+        ticker: "PDD",
+        yahoo: "PDD",
+        shares: 2_000,
+        avgCost: 81.58,
+        currency: "USD",
+        account: "winglung",
       },
       {
         id: "baoan",
@@ -788,6 +827,7 @@
         shares: 100,
         avgCost: 17.835,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "liyuan",
@@ -797,6 +837,7 @@
         shares: 285_900,
         avgCost: 2.4979,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "beiken",
@@ -806,6 +847,7 @@
         shares: 2_000,
         avgCost: 14.9649,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "smartcar",
@@ -815,6 +857,7 @@
         shares: 100,
         avgCost: 1.886,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "kelong",
@@ -824,6 +867,7 @@
         shares: 130,
         avgCost: 7.1923,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "xinjingang",
@@ -833,6 +877,7 @@
         shares: 29_100,
         avgCost: 31.3016,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "xfetf",
@@ -842,6 +887,7 @@
         shares: 173_400,
         avgCost: 0.8322,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "spxboshi",
@@ -851,6 +897,7 @@
         shares: 10_000,
         avgCost: 2.4294,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "techhb",
@@ -860,6 +907,7 @@
         shares: 200,
         avgCost: 0.925,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "nevehx",
@@ -869,6 +917,7 @@
         shares: 12_000,
         avgCost: 2.6465,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "foodhb",
@@ -878,6 +927,7 @@
         shares: 479_600,
         avgCost: 1.0493,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "moutai",
@@ -887,6 +937,7 @@
         shares: 800,
         avgCost: 1618.4172,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "longi",
@@ -896,6 +947,7 @@
         shares: 140,
         avgCost: 62.8741,
         currency: "CNY",
+        account: "pingan",
       },
       {
         id: "idreamsky",
@@ -905,6 +957,7 @@
         shares: 8_400,
         avgCost: 7.799,
         currency: "HKD",
+        account: "pingan",
       },
     ];
 
@@ -1122,6 +1175,13 @@
       return currency;
     }
 
+    function accountLabel(account) {
+      if (account === "futu") return "富途";
+      if (account === "pingan") return "平安";
+      if (account === "winglung") return "招商永隆";
+      return account || "";
+    }
+
     function holdingMetrics(h) {
       const q = lastGood[h.id];
       const loading = !q;
@@ -1204,6 +1264,7 @@
                 <span>${h.ticker}</span>
                 <span class="badge mkt-${h.currency}">${mkt}</span>
                 <span class="badge">${h.currency}</span>
+                <span class="badge acct-${h.account || ""}">${accountLabel(h.account)}</span>
               </div>
               ${stale}
             </div>

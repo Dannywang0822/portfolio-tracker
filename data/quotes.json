@@ -1,10 +1,22 @@
 {
-  "updatedAt": "2026-10-14T23:14:38.971814+08:00",
+  "updatedAt": "2026-10-14T23:17:05.590073+08:00",
   "quotes": {
     "PDD": {
-      "price": 81.615,
+      "price": 81.64,
       "previousClose": 81.96,
-      "changePct": -0.421,
+      "changePct": -0.39,
+      "currency": "USD"
+    },
+    "COIN": {
+      "price": 174.25,
+      "previousClose": 181.79,
+      "changePct": -4.148,
+      "currency": "USD"
+    },
+    "NVO": {
+      "price": 38.16,
+      "previousClose": 38.06,
+      "changePct": 0.263,
       "currency": "USD"
     },
     "0700.HK": {
@@ -116,9 +128,9 @@
       "currency": "HKD"
     },
     "USDHKD=X": {
-      "price": 7.8479,
+      "price": 7.8482,
       "previousClose": 7.8473,
-      "changePct": 0.0076,
+      "changePct": 0.0117,
       "currency": "HKD"
     },
     "USDCNY=X": {
