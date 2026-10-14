@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-10-14T23:14:19.821157+08:00",
+  "updatedAt": "2026-10-14T23:14:38.971814+08:00",
   "quotes": {
     "PDD": {
-      "price": 81.58,
+      "price": 81.615,
       "previousClose": 81.96,
-      "changePct": -0.464,
+      "changePct": -0.421,
       "currency": "USD"
     },
     "0700.HK": {
