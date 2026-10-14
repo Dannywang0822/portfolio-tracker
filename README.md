@@ -1,26 +1,46 @@
-# 持仓跟踪（H5）
+# 持仓跟踪（H5 / PWA）
 
-极兔 `1519.HK`、拼多多 `PDD`、标普500/`SPY` 持仓面板。
+在线面板：**https://dannywang0822.github.io/portfolio-tracker/**
 
-## GitHub Pages（推荐）
+仓库：**https://github.com/Dannywang0822/portfolio-tracker**
 
-1. 本仓库由 Actions 每约 15 分钟拉取 Yahoo 行情，写入 [`data/quotes.json`](data/quotes.json)。
-2. 页面优先读这个 JSON，因此 **GitHub Pages 静态托管也能刷新数据**。
-3. 开启 Pages：仓库 Settings → Pages → Source 选 **GitHub Actions** 或 **Deploy from branch `main` / root**（以你账号界面为准）。
-4. **注意**：GitHub 免费账号的 **私有仓库默认不能开 Pages**（通常需要 GitHub Pro）。若开不了，可改公开仓库，或继续用本地 `python3 serve.py`。
+## 项目背景
 
-私有仓库的 Pages 网址一般是：`https://<用户名>.github.io/<仓库名>/`（需登录且有仓库权限才能访问）。
+这是一个个人持仓跟踪面板，用来盯几只关心的标的，并按持仓股数和成本价估算盈亏，而不是接券商账户。
+
+当前跟踪：
+
+| 标的 | 代码 | 持仓 | 成本均价 |
+|------|------|------|----------|
+| 极兔速递（J&T Express） | `1519.HK` | 1,000,000 股 | HKD 9 |
+| 拼多多 | `PDD` | 500,000 股 | USD 80 |
+| 标普500（用 ETF 跟踪） | `SPY` | 10,000 股 | USD 600 |
+
+港股用 Yahoo 的 `USDHKD=X` 折算成美元，和美股持仓在同一套汇总里看。
+
+一开始是单页 HTML，后来做成手机友好的 H5，并加上 PWA（可「添加到主屏幕」）。浏览器里直接请求 Yahoo 会被 CORS 拦住，所以线上改成：GitHub Actions 大约每 15 分钟拉一次行情，写入 `data/quotes.json`，页面优先读这个静态文件。
+
+## 在线地址
+
+- **网页（GitHub Pages）**：https://dannywang0822.github.io/portfolio-tracker/
+- **源码仓库**：https://github.com/Dannywang0822/portfolio-tracker
+
+行情更新后，刷新页面即可看到最新报价（Yahoo 本身可能有延迟）。
 
 ## 本地预览
+
+需要实时代理 Yahoo（不依赖 Actions 的 JSON）时：
 
 ```bash
 python3 serve.py
 ```
 
-浏览器打开 `http://127.0.0.1:8765/`（不要用 `file://` 打开）。
+浏览器打开 `http://127.0.0.1:8765/`（不要用 `file://`）。
 
 ## 手动刷新行情文件
 
 ```bash
 python3 scripts/fetch_quotes.py
 ```
+
+会更新 `data/quotes.json`。线上由工作流 `.github/workflows/update-quotes.yml` 定时跑同样的脚本。
