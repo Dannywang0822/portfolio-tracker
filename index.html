@@ -681,6 +681,84 @@
       button#refreshBtn, button#logoutBtn { min-height: 40px; }
     }
 
+    button#addHoldingBtn {
+      appearance: none;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: var(--accent-soft);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      min-height: 36px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+    button#addHoldingBtn:active { transform: scale(0.97); }
+    .sort-row .add-wrap { margin-left: auto; display: flex; align-items: center; }
+    .holding-modal {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: flex-end; justify-content: center;
+      background: rgba(0,0,0,0.55);
+      padding: 12px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .holding-modal[hidden] { display: none !important; }
+    .holding-modal-card {
+      width: min(440px, 100%);
+      max-height: min(90vh, 720px);
+      overflow: auto;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 12px 12px;
+      box-shadow: var(--shadow);
+      padding: 18px 16px 16px;
+    }
+    @media (min-width: 560px) {
+      .holding-modal { align-items: center; }
+      .holding-modal-card { border-radius: 16px; }
+    }
+    .holding-modal-card h2 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 700; }
+    .holding-modal-card .modal-sub { margin: 0 0 14px; color: var(--dim); font-size: 0.75rem; }
+    .hm-field { margin-bottom: 12px; }
+    .hm-field label {
+      display: block; font-size: 0.72rem; color: var(--muted);
+      margin-bottom: 5px; font-weight: 600;
+    }
+    .hm-field input, .hm-field select {
+      width: 100%; box-sizing: border-box; appearance: none;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      font: inherit; font-size: 0.9rem; padding: 10px 12px; min-height: 42px;
+      border-radius: 10px; outline: none;
+    }
+    .hm-field input:focus, .hm-field select:focus { border-color: rgba(59, 130, 246, 0.55); }
+    .hm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hm-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .hm-actions button {
+      flex: 1; appearance: none; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font: inherit; font-weight: 600;
+      font-size: 0.9rem; padding: 12px; min-height: 44px; border-radius: 12px;
+      cursor: pointer; touch-action: manipulation;
+    }
+    .hm-actions button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .hm-actions button.primary:active { transform: scale(0.98); }
+    .hm-error { display: none; color: #f87171; font-size: 0.78rem; margin: 0 0 8px; }
+    .hm-error.show { display: block; }
+    .card-actions {
+      display: flex; gap: 8px; margin-top: 10px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .card-actions button {
+      appearance: none; flex: 0 0 auto; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font: inherit;
+      font-size: 0.72rem; font-weight: 600; padding: 6px 10px;
+      border-radius: 8px; cursor: pointer; touch-action: manipulation;
+    }
+    .card-actions button.danger { color: #f87171; border-color: rgba(248,113,113,0.35); }
+    .badge.custom-badge { color: #94a3b8; border-color: rgba(148, 163, 184, 0.4); }
+
     .empty-filter {
       column-span: all;
       padding: 28px 16px;
@@ -798,6 +876,9 @@
           <option value="day">日涨跌</option>
         </select>
         <span class="pos-count" id="posCount"></span>
+        <div class="add-wrap">
+          <button type="button" id="addHoldingBtn">＋新增</button>
+        </div>
       </div>
     </div>
 
@@ -811,6 +892,54 @@
     <footer>
       Danny 持仓 · H5 / PWA · 无 API Key
     </footer>
+  </div>
+
+  <div class="holding-modal" id="holdingModal" hidden>
+    <form class="holding-modal-card" id="holdingForm" autocomplete="off">
+      <h2 id="holdingModalTitle">新增持仓</h2>
+      <p class="modal-sub">保存在本机浏览器 · 不会写入仓库</p>
+      <input type="hidden" id="hmEditId" value="" />
+      <div class="hm-field">
+        <label for="hmName">名称</label>
+        <input id="hmName" name="name" type="text" required maxlength="64" placeholder="例如 苹果" />
+      </div>
+      <div class="hm-field">
+        <label for="hmYahoo">代码 / Yahoo 代码</label>
+        <input id="hmYahoo" name="yahoo" type="text" required maxlength="32" placeholder="例如 AAPL、0700.HK、600519.SS" />
+      </div>
+      <div class="hm-row">
+        <div class="hm-field">
+          <label for="hmShares">股数</label>
+          <input id="hmShares" name="shares" type="number" required min="0" step="any" placeholder="100" />
+        </div>
+        <div class="hm-field">
+          <label for="hmAvgCost">成本均价</label>
+          <input id="hmAvgCost" name="avgCost" type="number" required min="0" step="any" placeholder="10.5" />
+        </div>
+      </div>
+      <div class="hm-field">
+        <label for="hmCurrency">币种（自动对应市场）</label>
+        <select id="hmCurrency" name="currency" required>
+          <option value="USD">USD · 美股</option>
+          <option value="HKD">HKD · 港股</option>
+          <option value="CNY">CNY · A股</option>
+        </select>
+      </div>
+      <div class="hm-field">
+        <label for="hmAccount">账户</label>
+        <select id="hmAccount" name="account" required>
+          <option value="futu">富途</option>
+          <option value="pingan">平安</option>
+          <option value="winglung">招商永隆</option>
+          <option value="citic">中信国际</option>
+        </select>
+      </div>
+      <p class="hm-error" id="hmError" role="alert"></p>
+      <div class="hm-actions">
+        <button type="button" id="hmCancel">取消</button>
+        <button type="submit" class="primary" id="hmSubmit">保存</button>
+      </div>
+    </form>
   </div>
 
   <script>
@@ -1067,6 +1196,56 @@
       },
     ];
 
+    const CUSTOM_KEY = "portfolio-custom-holdings";
+    let quotesSettled = false;
+    const MARKET_FROM_CURRENCY = { USD: "us", HKD: "hk", CNY: "cn" };
+
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function loadCustomHoldings() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        return arr
+          .filter((h) => h && h.id && h.yahoo && h.name)
+          .map((h) => ({
+            id: String(h.id),
+            name: String(h.name),
+            ticker: String(h.ticker || h.yahoo),
+            yahoo: String(h.yahoo).trim(),
+            shares: Number(h.shares) || 0,
+            avgCost: Number(h.avgCost) || 0,
+            currency: h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD",
+            account: ["futu", "pingan", "winglung", "citic"].includes(h.account) ? h.account : "futu",
+            market: h.market || MARKET_FROM_CURRENCY[h.currency] || "us",
+            custom: true,
+          }));
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCustomHoldings(list) {
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+    }
+
+    function allHoldings() {
+      return HOLDINGS.concat(loadCustomHoldings());
+    }
+
+    function genCustomId() {
+      return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    }
+
     const FX_SYMBOLS = ["USDHKD=X", "USDCNY=X"];
     const REFRESH_MS = 15 * 60 * 1000;
     /** 公共 CORS 代理（仅作备用；优先走本机 serve.py 的 /api/quote） */
@@ -1181,7 +1360,7 @@
     function applyStaticQuotes(bundle) {
       const qmap = bundle.quotes || {};
       let applied = 0;
-      for (const h of HOLDINGS) {
+      for (const h of allHoldings()) {
         const row = qmap[h.yahoo];
         if (!row || row.price == null || row.error) continue;
         lastGood[h.id] = {
@@ -1291,20 +1470,22 @@
 
     function holdingMetrics(h) {
       const q = lastGood[h.id];
-      const loading = !q;
-      const price = q ? q.price : null;
-      const changePct = q ? q.changePct : null;
+      const hasQuote = !!(q && q.price != null && !Number.isNaN(Number(q.price)));
+      const loading = !hasQuote && !quotesSettled;
+      const missing = !hasQuote && quotesSettled;
+      const price = hasQuote ? q.price : null;
+      const changePct = hasQuote ? q.changePct : null;
       const costBasis = h.shares * h.avgCost;
       const mv = price != null ? h.shares * price : null;
       const pnl = mv != null ? mv - costBasis : null;
       const pnlPct = pnl != null && costBasis ? (pnl / costBasis) * 100 : null;
       const mvUsd = mv != null ? toUsd(mv, h.currency) : null;
       const pnlUsd = pnl != null ? toUsd(pnl, h.currency) : null;
-      return { q, loading, price, changePct, costBasis, mv, pnl, pnlPct, mvUsd, pnlUsd };
+      return { q, loading, missing, price, changePct, costBasis, mv, pnl, pnlPct, mvUsd, pnlUsd };
     }
 
     function filteredHoldings() {
-      let list = HOLDINGS.slice();
+      let list = allHoldings();
       if (viewState.account !== "all") {
         list = list.filter((h) => h.account === viewState.account);
       }
@@ -1357,10 +1538,11 @@
       const root = el("positions");
       const list = visibleHoldings();
       const countEl = el("posCount");
+      const total = allHoldings().length;
       if (countEl) {
-        countEl.textContent = list.length === HOLDINGS.length
+        countEl.textContent = list.length === total
           ? `${list.length} 只`
-          : `${list.length} / ${HOLDINGS.length}`;
+          : `${list.length} / ${total}`;
       }
       if (!list.length) {
         root.innerHTML = `<div class="empty-filter">该筛选下暂无持仓</div>`;
@@ -1370,34 +1552,49 @@
         Array.from(root.querySelectorAll(".card.open")).map((n) => n.getAttribute("data-id"))
       );
       root.innerHTML = list.map((h) => {
-        const { q, loading, price, changePct, costBasis, mv, pnl, pnlPct } = holdingMetrics(h);
+        const { q, loading, missing, price, changePct, costBasis, mv, pnl, pnlPct } = holdingMetrics(h);
         const stale = q && q.error ? `<div class="err-tag">报价更新失败，显示上次成功数据</div>` : "";
         const mkt = marketLabel(h.currency);
         const isOpen = openIds.has(h.id) ? " open" : "";
+        const noPx = loading || missing;
+        const pnlFace = noPx ? "…" : fmtPct(pnlPct);
+        const priceFace = loading ? "加载中" : (missing ? "—" : fmtMoney(price, h.currency, 3));
+        const dayFace = noPx ? "" : fmtPct(changePct);
+        const mvText = noPx ? "—" : fmtMoney(mv, h.currency);
+        const pnlText = loading ? "—" : (missing ? "N/A" : fmtMoney(pnl, h.currency));
+        const pnlPctText = loading ? "—" : (missing ? "N/A" : fmtPct(pnlPct));
+        const customBadge = h.custom ? `<span class="badge custom-badge">手动</span>` : "";
+        const actions = h.custom
+          ? `<div class="card-actions">
+              <button type="button" data-edit="${escapeHtml(h.id)}">编辑</button>
+              <button type="button" class="danger" data-delete="${escapeHtml(h.id)}">删除</button>
+            </div>`
+          : "";
 
         return `
-          <article class="card${isOpen}" data-id="${h.id}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
+          <article class="card${isOpen}" data-id="${escapeHtml(h.id)}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
             <div class="pos-head">
-              <div class="pos-name">${h.name}</div>
+              <div class="pos-name">${escapeHtml(h.name)}</div>
               <div class="pos-ticker">
-                <span>${h.ticker}</span>
-                <span class="badge mkt-${h.currency}">${mkt}</span>
-                <span class="badge acct-${h.account || ""}">${accountLabel(h.account)}</span>
+                <span>${escapeHtml(h.ticker)}</span>
+                <span class="badge mkt-${escapeHtml(h.currency)}">${mkt}</span>
+                <span class="badge acct-${escapeHtml(h.account || "")}">${accountLabel(h.account)}</span>
+                ${customBadge}
               </div>
               ${stale}
             </div>
             <div class="card-face">
-              <div class="card-pnl ${loading ? "flat" : pnlClass(pnlPct)}">${loading ? "…" : fmtPct(pnlPct)}</div>
+              <div class="card-pnl ${noPx ? "flat" : pnlClass(pnlPct)}">${pnlFace}</div>
               <div class="card-price">
-                <span class="${loading ? "" : pnlClass(changePct)}">${loading ? "加载中" : fmtMoney(price, h.currency, 3)}</span>
-                <span class="day ${loading ? "" : pnlClass(changePct)}">${loading ? "" : fmtPct(changePct)}</span>
+                <span class="${noPx ? "" : pnlClass(changePct)}">${priceFace}</span>
+                <span class="day ${noPx ? "" : pnlClass(changePct)}">${dayFace}</span>
               </div>
               <div class="card-meta">${fmtNum(h.shares, 0)} 股 · 成本 ${fmtMoney(h.avgCost, h.currency)}</div>
             </div>
             <div class="card-more">
               <div class="metric">
                 <div class="k">市值</div>
-                <div class="v">${loading ? "—" : fmtMoney(mv, h.currency)}</div>
+                <div class="v">${mvText}</div>
               </div>
               <div class="metric">
                 <div class="k">成本合计</div>
@@ -1405,9 +1602,10 @@
               </div>
               <div class="metric pnl-block">
                 <div class="k">浮动盈亏</div>
-                <div class="v lg ${loading ? "" : pnlClass(pnl)}">${loading ? "—" : fmtMoney(pnl, h.currency)}</div>
-                <div class="s ${loading ? "" : pnlClass(pnlPct)}">${loading ? "—" : fmtPct(pnlPct)}</div>
+                <div class="v lg ${noPx ? "" : pnlClass(pnl)}">${pnlText}</div>
+                <div class="s ${noPx ? "" : pnlClass(pnlPct)}">${pnlPctText}</div>
               </div>
+              ${actions}
             </div>
             <div class="card-hint">点按查看明细</div>
           </article>
@@ -1415,7 +1613,8 @@
       }).join("");
 
       root.querySelectorAll(".card").forEach((card) => {
-        const toggle = () => {
+        const toggle = (e) => {
+          if (e.target.closest("[data-edit], [data-delete]")) return;
           const on = card.classList.toggle("open");
           card.setAttribute("aria-expanded", on ? "true" : "false");
         };
@@ -1423,7 +1622,7 @@
         card.addEventListener("keydown", (e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            toggle();
+            toggle(e);
           }
         });
       });
@@ -1790,12 +1989,14 @@
       const editBtn = e.target.closest("[data-edit]");
       const delBtn = e.target.closest("[data-delete]");
       if (editBtn) {
+        e.stopPropagation();
         const id = editBtn.getAttribute("data-edit");
         const h = loadCustomHoldings().find((x) => x.id === id);
         if (h) openHoldingModal(h);
         return;
       }
       if (delBtn) {
+        e.stopPropagation();
         const id = delBtn.getAttribute("data-delete");
         const h = loadCustomHoldings().find((x) => x.id === id);
         if (!h) return;

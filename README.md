@@ -62,6 +62,17 @@
 
 页面有轻量登录门禁（默认用户名 `danny`），仅保存在本机浏览器，不构成真实服务端鉴权。
 
+
+## 手动新增持仓
+
+登录后，筛选栏右上角点 **＋新增**，填写名称、Yahoo 代码、股数、成本、币种、账户即可。
+
+- 币种自动对应市场：USD→美股、HKD→港股、CNY→A股（与现有市场筛选一致）
+- 手动持仓只保存在本机浏览器 `localStorage` 键 **`portfolio-custom-holdings`**，不会写入 GitHub 仓库
+- 仅手动条目可编辑 / 删除；内置持仓仍由仓库维护
+- 若代码尚未出现在 `data/quotes.json`，现价显示为 —，盈亏为 N/A，刷新时会尝试按现有行情路径补拉
+
+
 ## 在线地址
 
 - **网页（GitHub Pages）**：https://dannywang0822.github.io/portfolio-tracker/
