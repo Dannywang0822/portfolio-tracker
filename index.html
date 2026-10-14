@@ -2645,6 +2645,7 @@
       applyCachedCustomQuotes();
       renderCards();
       renderSummary();
+      startMarketHoursClock();
       refreshAll(false);
       requestAnimationFrame(syncStickyPnl);
     }
@@ -2663,6 +2664,8 @@
       setLoggedIn(false);
       if (refreshTimer) clearTimeout(refreshTimer);
       if (countdownTimer) clearInterval(countdownTimer);
+      if (marketHoursTimer) clearInterval(marketHoursTimer);
+      marketHoursTimer = null;
       showLogin();
     }
 
