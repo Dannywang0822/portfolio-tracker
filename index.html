@@ -257,90 +257,165 @@
       border-color: rgba(245, 158, 11, 0.3);
     }
 
+    /* Waterfall card stream */
     .positions {
-      display: grid;
-      gap: 12px;
+      column-count: 2;
+      column-gap: 10px;
     }
 
     .card {
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+      page-break-inside: avoid;
+      display: block;
+      margin: 0 0 10px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
+      border-radius: 16px;
+      padding: 12px 12px 10px;
       box-shadow: var(--shadow);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: border-color 0.15s, transform 0.1s;
     }
+    .card:active { transform: scale(0.985); }
+    .card.open { border-color: rgba(59, 130, 246, 0.45); }
 
     .card .pos-head {
-      grid-column: 1 / -1;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--border-soft);
     }
 
     .pos-name {
-      font-size: 1.05rem;
+      font-size: 0.92rem;
       font-weight: 700;
       letter-spacing: -0.01em;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .pos-ticker {
-      display: inline-flex;
+      display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 4px 6px;
       font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.78rem;
+      font-size: 0.68rem;
       color: var(--muted);
     }
 
     .badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 1px 6px;
       border-radius: 6px;
       background: var(--bg-elev);
       border: 1px solid var(--border-soft);
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--dim);
       font-weight: 500;
     }
 
-    .metric .k {
-      font-size: 0.7rem;
+    .card-face {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-pnl {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .card-price {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 8px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-price .day {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .card-meta {
+      font-size: 0.68rem;
       color: var(--dim);
-      margin-bottom: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-more {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-soft);
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .card.open .card-more { display: grid; }
+
+    .metric .k {
+      font-size: 0.65rem;
+      color: var(--dim);
+      margin-bottom: 2px;
       font-weight: 500;
     }
 
     .metric .v {
       font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.95rem;
+      font-size: 0.82rem;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
 
-    .metric .v.lg { font-size: 1.12rem; }
+    .metric .v.lg { font-size: 0.95rem; }
 
     .metric.pnl-block {
       grid-column: 1 / -1;
       background: var(--bg-elev);
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border: 1px solid var(--border-soft);
     }
 
-    .metric.pnl-block .v.lg {
-      font-size: 1.35rem;
-    }
+    .metric.pnl-block .v.lg { font-size: 1.05rem; }
 
     .metric .s {
       margin-top: 2px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--muted);
       font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    .card-hint {
+      margin-top: 8px;
+      font-size: 0.62rem;
+      color: var(--dim);
+      text-align: center;
+    }
+    .card.open .card-hint { display: none; }
+
+    @media (min-width: 720px) {
+      .positions { column-count: 3; column-gap: 12px; }
+      .pos-name { font-size: 1rem; }
+      .card-pnl { font-size: 1.5rem; }
+    }
+
+    @media (min-width: 1100px) {
+      .wrap { max-width: 960px; }
     }
 
     .status-row {
@@ -596,25 +671,18 @@
     .badge.acct-winglung { color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
     .badge.acct-citic { color: #fb923c; border-color: rgba(251, 146, 60, 0.4); }
 
-    /* Denser cards for long lists on phone */
     @media (max-width: 519px) {
-      .card {
-        padding: 12px;
-        gap: 10px 8px;
-      }
-      .pos-name { font-size: 0.98rem; }
-      .metric .v { font-size: 0.88rem; }
-      .metric .v.lg { font-size: 1.02rem; }
-      .metric.pnl-block { padding: 8px 10px; }
-      .metric.pnl-block .v.lg { font-size: 1.18rem; }
+      .summary { gap: 8px; margin: 12px 0 10px; }
       .summary-card .value { font-size: 1.02rem; }
-      .summary-card.pnl-hero .value { font-size: 1.45rem; }
+      .summary-card.pnl-hero .value { font-size: 1.4rem; }
+      .summary-card.fx-card { display: none; }
       .toolbar { gap: 6px; }
       .meta-pill { padding: 6px 10px; min-height: 40px; font-size: 0.75rem; }
       button#refreshBtn, button#logoutBtn { min-height: 40px; }
     }
 
     .empty-filter {
+      column-span: all;
       padding: 28px 16px;
       text-align: center;
       color: var(--dim);
@@ -683,12 +751,12 @@
         <div class="value" id="sumMv">加载中</div>
         <div class="sub" id="sumMvSub">实时报价合计</div>
       </div>
-      <div class="summary-card">
+      <div class="summary-card fx-card">
         <div class="label">汇率 USD/HKD</div>
         <div class="value" id="sumFxHkd">加载中</div>
         <div class="sub" id="sumFxHkdSub">Yahoo USDHKD=X</div>
       </div>
-      <div class="summary-card">
+      <div class="summary-card fx-card">
         <div class="label">汇率 USD/CNY</div>
         <div class="value" id="sumFxCny">加载中</div>
         <div class="sub" id="sumFxCnySub">Yahoo USDCNY=X</div>
@@ -1298,46 +1366,67 @@
         root.innerHTML = `<div class="empty-filter">该筛选下暂无持仓</div>`;
         return;
       }
+      const openIds = new Set(
+        Array.from(root.querySelectorAll(".card.open")).map((n) => n.getAttribute("data-id"))
+      );
       root.innerHTML = list.map((h) => {
         const { q, loading, price, changePct, costBasis, mv, pnl, pnlPct } = holdingMetrics(h);
         const stale = q && q.error ? `<div class="err-tag">报价更新失败，显示上次成功数据</div>` : "";
         const mkt = marketLabel(h.currency);
+        const isOpen = openIds.has(h.id) ? " open" : "";
 
         return `
-          <article class="card" data-id="${h.id}">
+          <article class="card${isOpen}" data-id="${h.id}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
             <div class="pos-head">
               <div class="pos-name">${h.name}</div>
               <div class="pos-ticker">
                 <span>${h.ticker}</span>
                 <span class="badge mkt-${h.currency}">${mkt}</span>
-                <span class="badge">${h.currency}</span>
                 <span class="badge acct-${h.account || ""}">${accountLabel(h.account)}</span>
               </div>
               ${stale}
             </div>
-            <div class="metric">
-              <div class="k">持仓 / 成本价</div>
-              <div class="v">${fmtNum(h.shares, 0)} 股</div>
-              <div class="s">${fmtMoney(h.avgCost, h.currency)} / 股</div>
+            <div class="card-face">
+              <div class="card-pnl ${loading ? "flat" : pnlClass(pnlPct)}">${loading ? "…" : fmtPct(pnlPct)}</div>
+              <div class="card-price">
+                <span class="${loading ? "" : pnlClass(changePct)}">${loading ? "加载中" : fmtMoney(price, h.currency, 3)}</span>
+                <span class="day ${loading ? "" : pnlClass(changePct)}">${loading ? "" : fmtPct(changePct)}</span>
+              </div>
+              <div class="card-meta">${fmtNum(h.shares, 0)} 股 · 成本 ${fmtMoney(h.avgCost, h.currency)}</div>
             </div>
-            <div class="metric">
-              <div class="k">最新价 / 日涨跌</div>
-              <div class="v lg ${loading ? "" : pnlClass(changePct)}">${loading ? "加载中" : fmtMoney(price, h.currency, 3)}</div>
-              <div class="s ${loading ? "" : pnlClass(changePct)}">${loading ? "—" : fmtPct(changePct)}</div>
+            <div class="card-more">
+              <div class="metric">
+                <div class="k">市值</div>
+                <div class="v">${loading ? "—" : fmtMoney(mv, h.currency)}</div>
+              </div>
+              <div class="metric">
+                <div class="k">成本合计</div>
+                <div class="v">${fmtMoney(costBasis, h.currency)}</div>
+              </div>
+              <div class="metric pnl-block">
+                <div class="k">浮动盈亏</div>
+                <div class="v lg ${loading ? "" : pnlClass(pnl)}">${loading ? "—" : fmtMoney(pnl, h.currency)}</div>
+                <div class="s ${loading ? "" : pnlClass(pnlPct)}">${loading ? "—" : fmtPct(pnlPct)}</div>
+              </div>
             </div>
-            <div class="metric">
-              <div class="k">市值 / 成本</div>
-              <div class="v">${loading ? "加载中" : fmtMoney(mv, h.currency)}</div>
-              <div class="s">${fmtMoney(costBasis, h.currency)}</div>
-            </div>
-            <div class="metric pnl-block">
-              <div class="k">浮动盈亏</div>
-              <div class="v lg ${loading ? "" : pnlClass(pnl)}">${loading ? "加载中" : fmtMoney(pnl, h.currency)}</div>
-              <div class="s ${loading ? "" : pnlClass(pnlPct)}">${loading ? "—" : fmtPct(pnlPct)}</div>
-            </div>
+            <div class="card-hint">点按查看明细</div>
           </article>
         `;
       }).join("");
+
+      root.querySelectorAll(".card").forEach((card) => {
+        const toggle = () => {
+          const on = card.classList.toggle("open");
+          card.setAttribute("aria-expanded", on ? "true" : "false");
+        };
+        card.addEventListener("click", toggle);
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        });
+      });
       syncStickyPnl();
     }
 
@@ -1426,6 +1515,28 @@
       syncStickyPnl();
     }
 
+    async function fetchMissingQuotes(holdings, errors) {
+      const missing = holdings.filter((h) => {
+        const q = lastGood[h.id];
+        return !(q && q.price != null && !Number.isNaN(Number(q.price)));
+      });
+      if (!missing.length) return;
+      await Promise.all(
+        missing.map(async (h) => {
+          try {
+            const json = await fetchYahoo(h.yahoo);
+            const quote = parseQuote(json);
+            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date() };
+          } catch (err) {
+            errors.push(h.ticker || h.yahoo);
+            if (lastGood[h.id]) {
+              lastGood[h.id] = { ...lastGood[h.id], error: true };
+            }
+          }
+        })
+      );
+    }
+
     async function refreshAll(manual = false) {
       if (fetching) return;
       fetching = true;
@@ -1433,18 +1544,28 @@
       setStatus("loading", manual ? "手动刷新中…" : "更新行情中…");
 
       const errors = [];
+      const holdings = allHoldings();
 
       // GitHub Pages: prefer same-origin data/quotes.json (updated by Actions)
       const staticBundle = await loadStaticQuotes();
+      let usedStatic = false;
       if (staticBundle) {
         const n = applyStaticQuotes(staticBundle);
         if (n > 0) {
+          usedStatic = true;
+          // 手动新增的标的可能不在 quotes.json，补拉一遍
+          await fetchMissingQuotes(holdings, errors);
+          quotesSettled = true;
           renderCards();
           renderSummary();
           el("lastUpdated").textContent = staticBundle.updatedAt
             ? String(staticBundle.updatedAt).replace("T", " ").slice(0, 19) + " CST"
             : shanghaiNow();
-          setStatus("ok", "已从 quotes.json 更新（Actions 约每 15 分钟）");
+          if (errors.length) {
+            setStatus("ok", `quotes.json 已更新；部分手动标的暂无行情：${errors.join("、")}`);
+          } else {
+            setStatus("ok", "已从 quotes.json 更新（Actions 约每 15 分钟）");
+          }
           fetching = false;
           el("refreshBtn").disabled = false;
           scheduleNext();
@@ -1453,13 +1574,13 @@
       }
 
       await Promise.all(
-        HOLDINGS.map(async (h) => {
+        holdings.map(async (h) => {
           try {
             const json = await fetchYahoo(h.yahoo);
             const quote = parseQuote(json);
             lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date() };
           } catch (err) {
-            errors.push(h.ticker);
+            errors.push(h.ticker || h.yahoo);
             if (lastGood[h.id]) {
               lastGood[h.id] = { ...lastGood[h.id], error: true };
             }
@@ -1487,11 +1608,12 @@
       );
       lastFx = fxNext;
 
+      quotesSettled = true;
       renderCards();
       renderSummary();
       el("lastUpdated").textContent = shanghaiNow();
 
-      if (errors.length >= HOLDINGS.length + FX_SYMBOLS.length && Object.keys(lastGood).length === 0) {
+      if (errors.length >= holdings.length + FX_SYMBOLS.length && Object.keys(lastGood).length === 0) {
         setStatus("error", "全部报价获取失败");
         const note = el("fxNote");
         note.style.display = "block";
@@ -1559,6 +1681,130 @@
         navigator.serviceWorker.register("./sw.js").catch(() => {});
       });
     }
+
+    /* Manual add / edit holdings (localStorage only) */
+    function openHoldingModal(editHolding) {
+      const modal = el("holdingModal");
+      const form = el("holdingForm");
+      el("hmError").classList.remove("show");
+      el("hmError").textContent = "";
+      if (editHolding) {
+        el("holdingModalTitle").textContent = "编辑持仓";
+        el("hmEditId").value = editHolding.id;
+        el("hmName").value = editHolding.name;
+        el("hmYahoo").value = editHolding.yahoo;
+        el("hmShares").value = editHolding.shares;
+        el("hmAvgCost").value = editHolding.avgCost;
+        el("hmCurrency").value = editHolding.currency || "USD";
+        el("hmAccount").value = editHolding.account || "futu";
+      } else {
+        el("holdingModalTitle").textContent = "新增持仓";
+        el("hmEditId").value = "";
+        form.reset();
+        el("hmCurrency").value = "USD";
+        el("hmAccount").value = "futu";
+      }
+      modal.hidden = false;
+      el("hmName").focus();
+    }
+
+    function closeHoldingModal() {
+      el("holdingModal").hidden = true;
+    }
+
+    function upsertCustomHolding(payload) {
+      const list = loadCustomHoldings();
+      const idx = list.findIndex((h) => h.id === payload.id);
+      if (idx >= 0) list[idx] = payload;
+      else list.push(payload);
+      saveCustomHoldings(list);
+    }
+
+    function deleteCustomHolding(id) {
+      const list = loadCustomHoldings().filter((h) => h.id !== id);
+      saveCustomHoldings(list);
+      delete lastGood[id];
+    }
+
+    el("addHoldingBtn").addEventListener("click", () => openHoldingModal(null));
+    el("hmCancel").addEventListener("click", closeHoldingModal);
+    el("holdingModal").addEventListener("click", (e) => {
+      if (e.target === el("holdingModal")) closeHoldingModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !el("holdingModal").hidden) closeHoldingModal();
+    });
+
+    el("holdingForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = el("hmName").value.trim();
+      const yahoo = el("hmYahoo").value.trim();
+      const shares = Number(el("hmShares").value);
+      const avgCost = Number(el("hmAvgCost").value);
+      const currency = el("hmCurrency").value;
+      const account = el("hmAccount").value;
+      const err = el("hmError");
+      if (!name || !yahoo) {
+        err.textContent = "请填写名称和代码";
+        err.classList.add("show");
+        return;
+      }
+      if (!(shares >= 0) || Number.isNaN(shares) || !(avgCost >= 0) || Number.isNaN(avgCost)) {
+        err.textContent = "股数和成本均价须为有效数字";
+        err.classList.add("show");
+        return;
+      }
+      if (!["USD", "HKD", "CNY"].includes(currency)) {
+        err.textContent = "请选择币种";
+        err.classList.add("show");
+        return;
+      }
+      if (!["futu", "pingan", "winglung", "citic"].includes(account)) {
+        err.textContent = "请选择账户";
+        err.classList.add("show");
+        return;
+      }
+      const editId = el("hmEditId").value.trim();
+      const id = editId || genCustomId();
+      const market = MARKET_FROM_CURRENCY[currency] || "us";
+      upsertCustomHolding({
+        id,
+        name,
+        ticker: yahoo,
+        yahoo,
+        shares,
+        avgCost,
+        currency,
+        account,
+        market,
+        custom: true,
+      });
+      closeHoldingModal();
+      renderCards();
+      renderSummary();
+      // 新代码可能不在 quotes.json，尝试拉一次
+      refreshAll(true);
+    });
+
+    el("positions").addEventListener("click", (e) => {
+      const editBtn = e.target.closest("[data-edit]");
+      const delBtn = e.target.closest("[data-delete]");
+      if (editBtn) {
+        const id = editBtn.getAttribute("data-edit");
+        const h = loadCustomHoldings().find((x) => x.id === id);
+        if (h) openHoldingModal(h);
+        return;
+      }
+      if (delBtn) {
+        const id = delBtn.getAttribute("data-delete");
+        const h = loadCustomHoldings().find((x) => x.id === id);
+        if (!h) return;
+        if (!confirm(`确定删除手动持仓「${h.name}」？`)) return;
+        deleteCustomHolding(id);
+        renderCards();
+        renderSummary();
+      }
+    });
 
     /* Auth — lightweight client-side gate (not real security) */
     const AUTH_USER = "danny";
