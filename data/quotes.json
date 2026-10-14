@@ -1,34 +1,34 @@
 {
-  "updatedAt": "2026-10-14T23:50:21.481321+08:00",
+  "updatedAt": "2026-10-14T23:55:28.615171+08:00",
   "quotes": {
     "PDD": {
-      "price": 81.54,
+      "price": 81.49,
       "previousClose": 81.96,
-      "changePct": -0.513,
+      "changePct": -0.573,
       "currency": "USD"
     },
     "COIN": {
-      "price": 174.49,
+      "price": 174.02,
       "previousClose": 181.79,
-      "changePct": -4.016,
+      "changePct": -4.274,
       "currency": "USD"
     },
     "NVO": {
-      "price": 38.245,
+      "price": 38.265,
       "previousClose": 38.06,
-      "changePct": 0.486,
+      "changePct": 0.539,
       "currency": "USD"
     },
     "CAG": {
-      "price": 13.8,
+      "price": 13.79,
       "previousClose": 13.7,
-      "changePct": 0.731,
+      "changePct": 0.657,
       "currency": "USD"
     },
     "TSLA": {
-      "price": 366.42,
+      "price": 366.06,
       "previousClose": 375.23,
-      "changePct": -2.348,
+      "changePct": -2.444,
       "currency": "USD"
     },
     "0700.HK": {
@@ -140,9 +140,9 @@
       "currency": "HKD"
     },
     "USDHKD=X": {
-      "price": 7.8484,
+      "price": 7.8481,
       "previousClose": 7.8473,
-      "changePct": 0.014,
+      "changePct": 0.0102,
       "currency": "HKD"
     },
     "USDCNY=X": {
