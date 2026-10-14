@@ -1,0 +1,84 @@
+name: Watchlist from issue
+
+# Danny can open an issue titled "watchlist: SYMBOL" (or body with "yahoo: SYMBOL").
+# This adds the symbol to data/extra-symbols.json so the quote cron picks it up.
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  add-symbol:
+    if: startsWith(github.event.issue.title, 'watchlist:') || startsWith(github.event.issue.title, 'Watchlist:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse symbol and update extra-symbols.json
+        env:
+          TITLE: ${{ github.event.issue.title }}
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          title = os.environ.get("TITLE") or ""
+          body = os.environ.get("BODY") or ""
+          sym = None
+          m = re.match(r"watchlist:\s*(\S+)", title.strip(), re.I)
+          if m:
+              sym = m.group(1).strip()
+          if not sym:
+              m2 = re.search(r"yahoo:\s*(\S+)", body, re.I)
+              if m2:
+                  sym = m2.group(1).strip()
+          if not sym:
+              raise SystemExit("No symbol found in issue title/body")
+
+          sym = sym.strip().strip("`\"'")
+          # Yahoo 美股代码通常大写；带交易所后缀的一并 upper
+          sym = sym.upper()
+          path = Path("data/extra-symbols.json")
+          data = []
+          if path.exists():
+              raw = json.loads(path.read_text(encoding="utf-8"))
+              data = raw if isinstance(raw, list) else list(raw.get("symbols") or [])
+          if sym not in data:
+              data.append(sym)
+              path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+              print(f"added {sym}")
+              Path("/tmp/watchlist_added").write_text(sym)
+              Path("/tmp/watchlist_changed").write_text("1")
+          else:
+              print(f"already present {sym}")
+              Path("/tmp/watchlist_added").write_text(sym)
+              Path("/tmp/watchlist_changed").write_text("0")
+          PY
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/extra-symbols.json
+          if git diff --staged --quiet; then
+            echo "No file change"
+          else
+            SYM=$(cat /tmp/watchlist_added)
+            git commit -m "chore: watchlist add ${SYM}"
+            git push
+          fi
+      - name: Comment and close issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SYM=$(cat /tmp/watchlist_added)
+          CHANGED=$(cat /tmp/watchlist_changed)
+          if [ "$CHANGED" = "1" ]; then
+            MSG="已把 \`${SYM}\` 写入 \`data/extra-symbols.json\`。定时行情（约每 15 分钟）会开始更新；也可手动跑 Update quotes 工作流。"
+          else
+            MSG="\`${SYM}\` 已在 \`data/extra-symbols.json\` 中，无需重复添加。"
+          fi
+          gh issue comment ${{ github.event.issue.number }} --body "$MSG"
+          gh issue close ${{ github.event.issue.number }} --reason completed

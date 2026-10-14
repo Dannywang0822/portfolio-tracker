@@ -21,7 +21,9 @@
 - 币种自动对应市场：USD→美股、HKD→港股、CNY→A股（与现有市场筛选一致）
 - 手动持仓只保存在本机浏览器 `localStorage`，不会写入 GitHub 仓库
 - 仅手动条目可编辑 / 删除；内置持仓仍由仓库维护
-- 若代码尚未出现在 `data/quotes.json`，现价可能暂不可用，刷新时会尝试按现有行情路径补拉
+- **行情来源**：GitHub Actions 定时写入 `data/quotes.json`（内置列表 + `data/extra-symbols.json`）。浏览器读不到你的 localStorage，所以**新代码默认不在定时列表里**
+- 页面会尝试用公共代理即时补拉缺失行情，并缓存到本机；若仍无现价，展开该卡片点 **「加入定时行情」**（会打开 GitHub Issue，标题形如 `watchlist: AAPL`），合并进 `extra-symbols.json` 后约 15 分钟内开始更新
+- 也可以直接把 Yahoo 代码发给看板管理员，代为写入 `data/extra-symbols.json`
 
 ## 在线地址
 

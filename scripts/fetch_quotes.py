@@ -6,10 +6,39 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-SYMBOLS = ["PDD", "COIN", "NVO", "CAG", "TSLA", "0700.HK", "0981.HK", "1519.HK", "9992.HK", "000009.SZ", "002501.SZ", "002828.SZ", "161033.SZ", "300405.SZ", "300629.SZ", "510150.SS", "513500.SS", "515000.SS", "515030.SS", "515710.SS", "600519.SS", "601012.SS", "1119.HK", "USDHKD=X", "USDCNY=X"]
+# Built-in holdings + FX. Manual adds go into data/extra-symbols.json (or via watchlist issue).
+BASE_SYMBOLS = [
+    "PDD", "COIN", "NVO", "CAG", "TSLA",
+    "0700.HK", "0981.HK", "1519.HK", "9992.HK", "1119.HK",
+    "000009.SZ", "002501.SZ", "002828.SZ", "161033.SZ", "300405.SZ", "300629.SZ",
+    "510150.SS", "513500.SS", "515000.SS", "515030.SS", "515710.SS",
+    "600519.SS", "601012.SS",
+    "USDHKD=X", "USDCNY=X",
+]
 UA = "Mozilla/5.0 (compatible; PortfolioTracker/1.0)"
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "quotes.json"
+EXTRA = ROOT / "data" / "extra-symbols.json"
+
+
+def load_symbols() -> list:
+    seen = set()
+    out = []
+    extras = []
+    if EXTRA.exists():
+        try:
+            raw = json.loads(EXTRA.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                extras = [str(x).strip() for x in raw if str(x).strip()]
+            elif isinstance(raw, dict) and isinstance(raw.get("symbols"), list):
+                extras = [str(x).strip() for x in raw["symbols"] if str(x).strip()]
+        except Exception as e:
+            print(f"warn: could not read {EXTRA}: {e}")
+    for sym in BASE_SYMBOLS + extras:
+        if sym not in seen:
+            seen.add(sym)
+            out.append(sym)
+    return out
 
 
 def fetch_one(sym: str) -> dict:
@@ -42,8 +71,9 @@ def fetch_one(sym: str) -> dict:
 
 
 def main() -> None:
+    symbols = load_symbols()
     quotes = {}
-    for sym in SYMBOLS:
+    for sym in symbols:
         try:
             quotes[sym] = fetch_one(sym)
         except Exception as e:
@@ -54,7 +84,7 @@ def main() -> None:
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(out, indent=2))
+    print(json.dumps({"symbolCount": len(symbols), "symbols": symbols, "updatedAt": out["updatedAt"]}, indent=2))
 
 
 if __name__ == "__main__":

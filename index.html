@@ -1272,16 +1272,102 @@
 
     const FX_SYMBOLS = ["USDHKD=X", "USDCNY=X"];
     const REFRESH_MS = 15 * 60 * 1000;
-    /** 公共 CORS 代理（仅作备用；优先走本机 serve.py 的 /api/quote） */
+    const QUOTE_CACHE_KEY = "portfolio-custom-quote-cache";
+    const WATCHLIST_ISSUE_BASE =
+      "https://github.com/Dannywang0822/portfolio-tracker/issues/new";
+    /** 公共 CORS 代理：GitHub Pages 无 /api/quote，只能靠这些补拉手动标的 */
     const PROXY_BUILDERS = [
-      (u) => "https://cors.isomorphic-git.org/" + u,
-      (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
       (u) => "https://api.allorigins.win/get?url=" + encodeURIComponent(u),
-      (u) => "https://thingproxy.freeboard.io/fetch/" + u,
+      (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+      (u) => "https://corsproxy.org/?" + encodeURIComponent(u),
       (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
     ];
     const SERVE_HINT =
-      "请在本机运行 python3 serve.py，再用浏览器打开 http://本机IP:8765/（不要用 file:// 打开）";
+      "线上请点刷新重试，或把 Yahoo 代码发给看板管理员加入定时行情；本地可运行 python3 serve.py";
+
+    function isGitHubPages() {
+      return /github\.io$/i.test(location.hostname);
+    }
+
+    function normalizeYahooSymbol(raw, currency) {
+      let s = String(raw || "").trim().toUpperCase();
+      if (!s) return s;
+      if (s.includes("=") || /\.(HK|SS|SZ|NY|TO|L|T|AX|KQ|KS)$/i.test(s)) return s;
+      if (/^\d{1,6}$/.test(s)) {
+        if (currency === "HKD") return s.padStart(4, "0") + ".HK";
+        if (currency === "CNY" && s.length === 6) {
+          if ("569".includes(s[0])) return s + ".SS";
+          return s + ".SZ";
+        }
+      }
+      return s;
+    }
+
+    function loadQuoteCache() {
+      try {
+        const raw = localStorage.getItem(QUOTE_CACHE_KEY);
+        if (!raw) return {};
+        const obj = JSON.parse(raw);
+        return obj && typeof obj === "object" ? obj : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveQuoteCache(map) {
+      try {
+        localStorage.setItem(QUOTE_CACHE_KEY, JSON.stringify(map));
+      } catch (e) { /* quota */ }
+    }
+
+    function cacheQuoteForHolding(h, quote) {
+      if (!h || !h.custom || !quote || quote.price == null) return;
+      const map = loadQuoteCache();
+      map[h.yahoo] = {
+        price: quote.price,
+        previousClose: quote.previousClose,
+        changePct: quote.changePct,
+        currency: quote.currency || h.currency,
+        savedAt: Date.now(),
+      };
+      saveQuoteCache(map);
+    }
+
+    function applyCachedCustomQuotes() {
+      const map = loadQuoteCache();
+      let n = 0;
+      for (const h of loadCustomHoldings()) {
+        const row = map[h.yahoo];
+        if (!row || row.price == null) continue;
+        if (lastGood[h.id] && lastGood[h.id].price != null && !lastGood[h.id].fromCache) continue;
+        lastGood[h.id] = {
+          price: Number(row.price),
+          previousClose: row.previousClose != null ? Number(row.previousClose) : null,
+          changePct: row.changePct != null ? Number(row.changePct) : null,
+          currency: row.currency || h.currency,
+          asOf: row.savedAt ? new Date(row.savedAt) : new Date(),
+          error: false,
+          fetchedAt: new Date(),
+          source: "local-cache",
+          fromCache: true,
+        };
+        n += 1;
+      }
+      return n;
+    }
+
+    function watchlistIssueUrl(symbol) {
+      const title = "watchlist: " + symbol;
+      const body =
+        "请把以下 Yahoo 代码加入定时行情（data/extra-symbols.json）：\n\n" +
+        "yahoo: " + symbol + "\n\n" +
+        "（由持仓面板「加入定时行情」自动生成）";
+      return (
+        WATCHLIST_ISSUE_BASE +
+        "?title=" + encodeURIComponent(title) +
+        "&body=" + encodeURIComponent(body)
+      );
+    }
 
     /** @type {Record<string, any>} */
     const lastGood = {};
@@ -1339,9 +1425,9 @@
       return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
     }
 
-    async function fetchJson(url) {
+    async function fetchJson(url, timeoutMs = 12000) {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 20000);
+      const t = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
         const res = await fetch(url, {
           headers: { Accept: "application/json" },
@@ -1360,8 +1446,9 @@
     }
 
     function localApiUrl(symbol) {
-      // 同源代理：python3 serve.py 提供；file:// 下 location.origin 为 "null"，跳过
+      // 仅本地 serve.py；GitHub Pages 没有 /api/quote，且 origin 不含仓库子路径
       if (!location.protocol.startsWith("http")) return null;
+      if (isGitHubPages()) return null;
       return `${location.origin}/api/quote?symbol=${encodeURIComponent(symbol)}`;
     }
 
@@ -1411,25 +1498,30 @@
 
     async function fetchYahoo(symbol) {
       const url = yahooUrl(symbol);
-      const attempts = [];
       const local = localApiUrl(symbol);
-      if (local) attempts.push(local);
-      attempts.push(url);
-      for (const b of PROXY_BUILDERS) attempts.push(b(url));
-
-      let lastErr = null;
-      for (const attempt of attempts) {
+      if (local) {
         try {
-          const data = await fetchJson(attempt);
+          const data = await fetchJson(local, 10000);
           if (data && data.chart && data.chart.result) return data;
-          lastErr = new Error("unexpected JSON shape");
-        } catch (err) {
-          lastErr = err;
-        }
+        } catch (err) { /* fall through to proxies */ }
       }
-      throw new Error(
-        `${symbol}: 行情获取失败 (${lastErr && lastErr.message})。${SERVE_HINT}`
-      );
+
+      // Pages / 无本地代理：并行竞速公共 CORS 代理（顺序尝试太慢且易卡死）
+      const attempts = PROXY_BUILDERS.map((b) => b(url));
+      if (!isGitHubPages()) attempts.push(url);
+
+      const tasks = attempts.map(async (attempt) => {
+        const data = await fetchJson(attempt, 10000);
+        if (data && data.chart && data.chart.result) return data;
+        throw new Error("unexpected JSON shape");
+      });
+
+      try {
+        return await Promise.any(tasks);
+      } catch (agg) {
+        const msg = agg && agg.errors && agg.errors[0] ? agg.errors[0].message : "all proxies failed";
+        throw new Error(`${symbol}: 行情获取失败 (${msg})。${SERVE_HINT}`);
+      }
     }
 
     function parseQuote(json) {
@@ -1588,10 +1680,15 @@
         const pnlText = loading ? "—" : (missing ? "N/A" : fmtMoney(pnl, h.currency));
         const pnlPctText = loading ? "—" : (missing ? "N/A" : fmtPct(pnlPct));
         const customBadge = h.custom ? `<span class="badge custom-badge">手动</span>` : "";
+        const needWatch =
+          h.custom && missing && !loading
+            ? `<button type="button" data-watchlist="${escapeHtml(h.yahoo)}">加入定时行情</button>`
+            : "";
         const actions = h.custom
           ? `<div class="card-actions">
               <button type="button" data-edit="${escapeHtml(h.id)}">编辑</button>
               <button type="button" class="danger" data-delete="${escapeHtml(h.id)}">删除</button>
+              ${needWatch}
             </div>`
           : "";
 
@@ -1638,7 +1735,7 @@
 
       root.querySelectorAll(".card").forEach((card) => {
         const toggle = (e) => {
-          if (e.target.closest("[data-edit], [data-delete]")) return;
+          if (e.target.closest("[data-edit], [data-delete], [data-watchlist]")) return;
           const on = card.classList.toggle("open");
           card.setAttribute("aria-expanded", on ? "true" : "false");
         };
@@ -1741,7 +1838,8 @@
     async function fetchMissingQuotes(holdings, errors) {
       const missing = holdings.filter((h) => {
         const q = lastGood[h.id];
-        return !(q && q.price != null && !Number.isNaN(Number(q.price)));
+        // 缓存价可先显示，但刷新时仍尝试拉新价
+        return !(q && q.price != null && !Number.isNaN(Number(q.price)) && !q.fromCache);
       });
       if (!missing.length) return;
       await Promise.all(
@@ -1749,7 +1847,8 @@
           try {
             const json = await fetchYahoo(h.yahoo);
             const quote = parseQuote(json);
-            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date() };
+            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date(), source: "live" };
+            cacheQuoteForHolding(h, quote);
           } catch (err) {
             errors.push(h.ticker || h.yahoo);
             if (lastGood[h.id]) {
@@ -1785,7 +1884,10 @@
             ? String(staticBundle.updatedAt).replace("T", " ").slice(0, 19) + " CST"
             : shanghaiNow();
           if (errors.length) {
-            setStatus("ok", `quotes.json 已更新；部分手动标的暂无行情：${errors.join("、")}`);
+            setStatus(
+              "ok",
+              `quotes.json 已更新；手动标的暂无现价：${errors.join("、")}（可展开卡片点「加入定时行情」）`
+            );
           } else {
             setStatus("ok", "已从 quotes.json 更新（Actions 约每 15 分钟）");
           }
@@ -1801,7 +1903,8 @@
           try {
             const json = await fetchYahoo(h.yahoo);
             const quote = parseQuote(json);
-            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date() };
+            lastGood[h.id] = { ...quote, error: false, fetchedAt: new Date(), source: "live" };
+            cacheQuoteForHolding(h, quote);
           } catch (err) {
             errors.push(h.ticker || h.yahoo);
             if (lastGood[h.id]) {
@@ -1961,10 +2064,10 @@
     el("holdingForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = el("hmName").value.trim();
-      const yahoo = el("hmYahoo").value.trim();
+      const currency = el("hmCurrency").value;
+      const yahoo = normalizeYahooSymbol(el("hmYahoo").value, currency);
       const shares = Number(el("hmShares").value);
       const avgCost = Number(el("hmAvgCost").value);
-      const currency = el("hmCurrency").value;
       const account = el("hmAccount").value;
       const err = el("hmError");
       if (!name || !yahoo) {
@@ -2010,6 +2113,13 @@
     });
 
     el("positions").addEventListener("click", (e) => {
+      const watchBtn = e.target.closest("[data-watchlist]");
+      if (watchBtn) {
+        e.stopPropagation();
+        const sym = watchBtn.getAttribute("data-watchlist");
+        if (sym) window.open(watchlistIssueUrl(sym), "_blank", "noopener");
+        return;
+      }
       const editBtn = e.target.closest("[data-edit]");
       const delBtn = e.target.closest("[data-delete]");
       if (editBtn) {
@@ -2052,6 +2162,8 @@
       if (header) {
         document.documentElement.style.setProperty("--header-h", header.offsetHeight + "px");
       }
+      // 手动标的：先用本机缓存价占位，再异步刷新
+      applyCachedCustomQuotes();
       renderCards();
       renderSummary();
       refreshAll(false);
