@@ -49,3 +49,19 @@ python3 scripts/fetch_quotes.py
 ```
 
 会更新 `data/quotes.json`。线上由工作流 `.github/workflows/update-quotes.yml` 定时跑同样的脚本。
+
+## 日盈亏（T0·三市收盘后）
+
+**T0 定义**：美股常规交易时段收盘日（美东 16:00 后）。此时 A 股、港股对应日历交易日早已收盘，三市均结束，记为一笔官方日终市值。
+
+- GitHub Actions（`.github/workflows/daily-pnl.yml`）工作日 **UTC 22:00 ≈ 上海 06:00** 拉行情并写入 `data/daily-pnl.json`
+- 页面汇总区展示「日盈亏」三币种（USD/HKD/CNY），红涨绿跌
+- 有连续两日 T0 快照时：日盈亏 = 当日 T0 总市值 − 上一 T0 总市值
+- 仅有一日快照时：显示相对该 T0（或昨收估算）的市值变化，并标明引导/估算
+
+手动生成快照：
+
+```bash
+python3 scripts/fetch_quotes.py
+python3 scripts/snapshot_daily_pnl.py
+```

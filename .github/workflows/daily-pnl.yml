@@ -1,0 +1,32 @@
+name: Daily P&L snapshot (T0)
+
+# After US regular close, all three markets (CN/HK/US) have finished that session.
+# 22:00 UTC = 06:00 Asia/Shanghai (≈1–2h after NYSE close in DST/standard time).
+on:
+  schedule:
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Yahoo quotes
+        run: python3 scripts/fetch_quotes.py
+      - name: Write T0 daily P&L snapshot
+        run: python3 scripts/snapshot_daily_pnl.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/quotes.json data/daily-pnl.json
+          if git diff --staged --quiet; then
+            echo "No snapshot/quote changes"
+          else
+            git commit -m "chore: daily P&L T0 snapshot $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi

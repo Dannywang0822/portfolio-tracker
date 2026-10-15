@@ -22,6 +22,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
 .summary-card .value,.tri-v,.card-price,.mh-count,.meta-pill strong,.metric{font-family:"JetBrains Mono","IBM Plex Mono",monospace;}
 .summary-card,.card,.mh-card,.meta-pill,.fx-strip,.market-hours{background:linear-gradient(160deg,rgba(32,30,92,.92),rgba(18,20,60,.92))!important;border:1px solid rgba(0,240,255,.35)!important;box-shadow:var(--shadow);}
 .summary-card.pnl-hero{border-color:#ff2bd6!important;box-shadow:0 0 18px rgba(255,43,214,.35),inset 0 0 22px rgba(255,43,214,.12);}
+.summary-card.daily-pnl-card{border-color:#00f0ff!important;box-shadow:0 0 16px rgba(0,240,255,.28),inset 0 0 18px rgba(0,240,255,.08)!important;}
 .card:hover,.card.open{border-color:#ff2bd6!important;box-shadow:0 0 16px rgba(255,43,214,.4);}
 .summary-card .tri-ccy{color:#0a0b24;background:#00f0ff;border-radius:3px;}
 .up{color:var(--red)!important;text-shadow:0 0 8px rgba(255,61,110,.55);}

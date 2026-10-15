@@ -270,6 +270,15 @@
       grid-column: 1 / -1;
       padding: 16px 16px 14px;
     }
+    .summary-card.daily-pnl-card {
+      grid-column: 1 / -1;
+      padding: 14px 14px 12px;
+      border-color: rgba(0, 240, 255, 0.45);
+    }
+    .summary-card.daily-pnl-card .tri-row:first-child .tri-v {
+      font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+      font-weight: 700;
+    }
 
     .summary-card .label {
       color: var(--muted);
@@ -1251,6 +1260,15 @@
           <div class="tri-row"><span class="tri-ccy">CNY</span><span class="tri-v" id="sumPnlCny">¥—</span></div>
         </div>
         <div class="sub" id="sumPnlPct">—</div>
+      </div>
+      <div class="summary-card daily-pnl-card">
+        <div class="label" id="sumDailyLabel">日盈亏（T0·三市收盘后）</div>
+        <div class="tri" aria-label="日盈亏三币种">
+          <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumDaily">加载中</span></div>
+          <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumDailyHkd">HK$—</span></div>
+          <div class="tri-row"><span class="tri-ccy">CNY</span><span class="tri-v" id="sumDailyCny">¥—</span></div>
+        </div>
+        <div class="sub" id="sumDailySub">相对上一 T0 收盘市值</div>
       </div>
       <div class="summary-card">
         <div class="label">总成本</div>
@@ -2454,7 +2472,133 @@
       syncStickyPnl();
     }
 
+    let dailyPnlData = null;
+
+    async function loadDailyPnl() {
+      try {
+        const res = await fetch("./data/daily-pnl.json?t=" + Date.now(), {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        dailyPnlData = await res.json();
+      } catch (err) {
+        dailyPnlData = null;
+      }
+    }
+
+    /** Live portfolio MV in USD (all holdings, same rules as summary). */
+    function liveTotalMvUsd() {
+      let total = 0;
+      let ok = true;
+      for (const h of allHoldings()) {
+        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) continue;
+        const q = lastGood[h.id];
+        if (!q || q.price == null) {
+          ok = false;
+          continue;
+        }
+        const mvUsd = toUsd(h.shares * q.price, h.currency);
+        if (mvUsd == null) {
+          ok = false;
+          continue;
+        }
+        total += mvUsd;
+      }
+      return { total, ok };
+    }
+
+    function livePrevCloseMvUsd() {
+      let total = 0;
+      let any = false;
+      for (const h of allHoldings()) {
+        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) continue;
+        const q = lastGood[h.id];
+        if (!q) continue;
+        const px = q.previousClose != null ? q.previousClose : q.price;
+        if (px == null) continue;
+        const mvUsd = toUsd(h.shares * px, h.currency);
+        if (mvUsd == null) continue;
+        total += mvUsd;
+        any = true;
+      }
+      return any ? total : null;
+    }
+
+    function renderDailyPnl(totalMvUsd) {
+      const labelEl = el("sumDailyLabel");
+      const subEl = el("sumDailySub");
+      const setTri = (usdAmt) => {
+        const tri = fmtTriCurrency(usdAmt);
+        const sign = (t) => (usdAmt > 0 ? "+" : "") + t;
+        el("sumDaily").textContent = usdAmt == null || Number.isNaN(usdAmt) ? "—" : sign(tri.usd);
+        el("sumDaily").className = "tri-v " + pnlClass(usdAmt);
+        el("sumDailyHkd").textContent = usdAmt == null ? "HK$—" : sign(tri.hkd);
+        el("sumDailyHkd").className = "tri-v " + pnlClass(usdAmt);
+        el("sumDailyCny").textContent = usdAmt == null ? "¥—" : sign(tri.cny);
+        el("sumDailyCny").className = "tri-v " + pnlClass(usdAmt);
+      };
+
+      const snaps = dailyPnlData && Array.isArray(dailyPnlData.snapshots) ? dailyPnlData.snapshots : [];
+      const latest = dailyPnlData && dailyPnlData.latest ? dailyPnlData.latest : (snaps.length ? snaps[snaps.length - 1] : null);
+
+      // Prefer official T0-to-T0 when we have ≥2 snapshots
+      let prior = null;
+      if (latest && snaps.length >= 2) {
+        for (let i = snaps.length - 1; i >= 0; i--) {
+          if (snaps[i].t0 && latest.t0 && snaps[i].t0 !== latest.t0) {
+            prior = snaps[i];
+            break;
+          }
+        }
+      }
+
+      if (latest && prior && latest.totalMvUsd != null && prior.totalMvUsd != null) {
+        const pnl = latest.totalMvUsd - prior.totalMvUsd;
+        const pct = prior.totalMvUsd ? (pnl / prior.totalMvUsd) * 100 : null;
+        labelEl.textContent = `日盈亏（T0·三市收盘后 · ${latest.t0}）`;
+        setTri(pnl);
+        subEl.textContent =
+          `相对上一 T0（${prior.t0}）收盘市值` +
+          (pct != null ? ` · ${fmtPct(pct)}` : "") +
+          " · 红涨绿跌";
+        // If live quotes available, also hint intraday vs last T0
+        if (totalMvUsd != null && latest.totalMvUsd != null) {
+          const vs = totalMvUsd - latest.totalMvUsd;
+          subEl.textContent += ` · 相对该 T0 至今 ${vs >= 0 ? "+" : ""}${fmtMoney(vs, "USD")}`;
+        }
+        return;
+      }
+
+      // Single snapshot / bootstrap: show live vs last T0 close, or vs Yahoo previousClose
+      if (latest && latest.totalMvUsd != null && totalMvUsd != null) {
+        const pnl = totalMvUsd - latest.totalMvUsd;
+        const pct = latest.totalMvUsd ? (pnl / latest.totalMvUsd) * 100 : null;
+        labelEl.textContent = `日盈亏（相对 T0 ${latest.t0}）`;
+        setTri(pnl);
+        subEl.textContent =
+          (latest.bootstrap ? "引导快照 · " : "") +
+          "相对最近 T0 收盘市值（正式日盈亏需连续两日 T0）" +
+          (pct != null ? ` · ${fmtPct(pct)}` : "");
+        return;
+      }
+
+      const prevCloseMv = livePrevCloseMvUsd();
+      if (totalMvUsd != null && prevCloseMv != null) {
+        const pnl = totalMvUsd - prevCloseMv;
+        labelEl.textContent = "日盈亏（估算·相对昨收）";
+        setTri(pnl);
+        subEl.textContent = "暂无 T0 快照对比 · 按各标的 previousClose 估算 · 红涨绿跌";
+        return;
+      }
+
+      labelEl.textContent = "日盈亏（T0·三市收盘后）";
+      setTri(null);
+      subEl.textContent = "等待行情与 T0 快照";
+    }
+
     function renderSummary() {
+
       const fxNote = el("fxNote");
       const hkdRate = lastFx && lastFx.hkd != null ? lastFx.hkd : null;
       const cnyRate = lastFx && lastFx.cny != null ? lastFx.cny : null;
@@ -2506,6 +2650,10 @@
         el("sumPnlHkd").textContent = "HK$—";
         el("sumPnlCny").textContent = "¥—";
         el("sumPnlPct").textContent = "—";
+        el("sumDaily").textContent = "加载中";
+        el("sumDailyHkd").textContent = "HK$—";
+        el("sumDailyCny").textContent = "¥—";
+        el("sumDailySub").textContent = "等待行情";
         el("sumFxHkd").textContent = "—";
         el("sumFxCny").textContent = "—";
         return;
@@ -2564,6 +2712,7 @@
         fxNote.className = "fx-note warn";
         fxNote.textContent = prev + msg;
       }
+      renderDailyPnl(totalMvUsd);
       syncStickyPnl();
     }
 
@@ -2599,6 +2748,7 @@
 
       const errors = [];
       const holdings = allHoldings();
+      await loadDailyPnl();
 
       // GitHub Pages: prefer same-origin data/quotes.json (updated by Actions)
       const staticBundle = await loadStaticQuotes();

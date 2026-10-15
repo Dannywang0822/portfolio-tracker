@@ -1,0 +1,45 @@
+{
+  "updatedAt": "2026-10-15T15:48:22.323059+08:00",
+  "latest": {
+    "t0": "2026-10-14",
+    "capturedAt": "2026-10-15T15:48:22.323059+08:00",
+    "capturedAtNy": "2026-10-15T03:48:22.323076-04:00",
+    "fx": {
+      "hkd": 7.8474,
+      "cny": 6.6917
+    },
+    "quotesUpdatedAt": "2026-10-15T14:54:38.354230+08:00",
+    "totalMvUsd": 2035078.17,
+    "totalCostUsd": 2470648.03,
+    "totalMvPrevCloseUsd": 2035078.17,
+    "dayChangeVsPrevCloseUsd": 0.0,
+    "holdingCount": 26,
+    "missingQuotes": [],
+    "dailyPnlVsPriorT0Usd": null,
+    "priorT0": null,
+    "note": "引导快照：以各标的 Yahoo previousClose 估算 T0 收盘市值；次日 Action 会写入正式 T0 对比",
+    "bootstrap": true
+  },
+  "snapshots": [
+    {
+      "t0": "2026-10-14",
+      "capturedAt": "2026-10-15T15:48:22.323059+08:00",
+      "capturedAtNy": "2026-10-15T03:48:22.323076-04:00",
+      "fx": {
+        "hkd": 7.8474,
+        "cny": 6.6917
+      },
+      "quotesUpdatedAt": "2026-10-15T14:54:38.354230+08:00",
+      "totalMvUsd": 2035078.17,
+      "totalCostUsd": 2470648.03,
+      "totalMvPrevCloseUsd": 2035078.17,
+      "dayChangeVsPrevCloseUsd": 0.0,
+      "holdingCount": 26,
+      "missingQuotes": [],
+      "dailyPnlVsPriorT0Usd": null,
+      "priorT0": null,
+      "note": "引导快照：以各标的 Yahoo previousClose 估算 T0 收盘市值；次日 Action 会写入正式 T0 对比",
+      "bootstrap": true
+    }
+  ]
+}
