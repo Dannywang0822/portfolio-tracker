@@ -1609,9 +1609,16 @@
         const list = arr
           .filter((h) => h && h.id && (h.yahoo || h.ticker) && h.name)
           .map((h) => {
-            const currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
+            let currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
             const account = normalizeAccount(h.account);
-            const yahoo = resolveHoldingYahoo({ ...h, currency });
+            let yahoo = resolveHoldingYahoo({ ...h, currency });
+            // 币种按交易所后缀纠正：.SZ/.SS 必为 CNY，.HK 必为 HKD（旧数据误存 USD 会让合计虚高 ~7 倍）
+            const sufCur = currencyFromSuffix(yahoo);
+            if (sufCur && sufCur !== currency) {
+              currency = sufCur;
+              yahoo = resolveHoldingYahoo({ ...h, currency });
+              changed = true;
+            }
             if (String(h.yahoo).trim() !== yahoo || normalizeAccount(h.account) !== account) changed = true;
             return {
               id: String(h.id),
@@ -1635,6 +1642,13 @@
       } catch (e) {
         return [];
       }
+    }
+
+    function currencyFromSuffix(y) {
+      const u = String(y || "").toUpperCase();
+      if (/\.(SZ|SS)$/.test(u)) return "CNY";
+      if (/\.HK$/.test(u)) return "HKD";
+      return null;
     }
 
     function saveCustomHoldings(list) {
@@ -1727,7 +1741,7 @@
           price: Number(row.price),
           previousClose: row.previousClose != null ? Number(row.previousClose) : null,
           changePct: row.changePct != null ? Number(row.changePct) : null,
-          currency: row.currency || h.currency,
+          currency: h.currency,
           asOf: row.savedAt ? new Date(row.savedAt) : new Date(),
           error: false,
           fetchedAt: new Date(),
@@ -1879,7 +1893,7 @@
           price: Number(row.price),
           previousClose: row.previousClose != null ? Number(row.previousClose) : null,
           changePct: row.changePct != null ? Number(row.changePct) : null,
-          currency: row.currency || h.currency,
+          currency: h.currency,
           asOf: new Date(),
           error: false,
           fetchedAt: new Date(),
@@ -2183,11 +2197,13 @@
       let missingFx = false;
       const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
 
+      const missingQuote = [];
       const summaryList = filteredHoldings();
       for (const h of summaryList) {
         const q = lastGood[h.id];
         if (!q || q.price == null) {
           allReady = false;
+          if (quotesSettled) missingQuote.push(h.name || h.ticker);
           continue;
         }
         const cost = h.shares * h.avgCost;
@@ -2252,6 +2268,13 @@
         fxNote.style.display = "none";
         fxNote.className = "fx-note";
         fxNote.textContent = "";
+      }
+      if (missingQuote.length) {
+        const msg = `${missingQuote.length} 只缺报价，成本与市值均未计入合计：${missingQuote.join("、")}`;
+        el("sumCostSub").textContent = "缺报价标的未计入";
+        fxNote.style.display = "block";
+        fxNote.className = "fx-note warn";
+        fxNote.textContent = (missingFx ? fxNote.textContent + " " : "") + msg;
       }
       syncStickyPnl();
     }
