@@ -2,11 +2,12 @@
  * - 壳资源（HTML/CSS/manifest/icons）：缓存优先，离线可打开界面
  * - 行情请求（Yahoo / 代理）：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v22";
+const CACHE_NAME = "portfolio-h5-shell-v23";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
   "./market-hours.js",
+  "./theme-cyberpunk.css",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

@@ -1,0 +1,41 @@
+/* Theme A — 赛博朋克. Load AFTER the main <style>. Keeps .up=red / .down=green. */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap");
+:root{
+  --bg:#0a0b24; --bg-elev:#14163d; --bg-card:#171a48; --border:#3b2f7a; --border-soft:#2a2560;
+  --text:#f2f0ff; --muted:#a9b2e6; --dim:#7a80b8;
+  --accent:#00f0ff; --accent-soft:rgba(0,240,255,.14);
+  --red:#ff3d6e; --red-soft:rgba(255,61,110,.16); --green:#2bff9a; --green-soft:rgba(43,255,154,.14);
+  --amber:#ffd400; --shadow:0 0 0 1px rgba(255,43,214,.18),0 10px 30px rgba(0,0,0,.45);
+}
+body{font-family:"Rajdhani","PingFang SC","Noto Sans SC",sans-serif;font-weight:500;
+  background:
+   linear-gradient(rgba(0,240,255,.05) 1px,transparent 1px) 0 0/28px 28px,
+   linear-gradient(90deg,rgba(255,43,214,.05) 1px,transparent 1px) 0 0/28px 28px,
+   radial-gradient(900px 500px at 0% -10%,rgba(255,43,214,.30),transparent 55%),
+   radial-gradient(800px 480px at 100% 0%,rgba(0,240,255,.25),transparent 50%),
+   var(--bg) !important;}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);}
+.app-header{background:rgba(10,11,36,.82)!important;border-bottom:1px solid #ff2bd6;box-shadow:0 1px 18px rgba(255,43,214,.45);}
+.brand h1,.market-hours-title,.summary-card .label,.login-card h1{font-family:"Orbitron","Noto Sans SC",sans-serif;letter-spacing:.06em;}
+.brand h1{background:linear-gradient(90deg,#ff2bd6,#00f0ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px rgba(255,43,214,.55));}
+.summary-card .value,.tri-v,.card-price,.mh-count,.meta-pill strong,.metric{font-family:"JetBrains Mono","IBM Plex Mono",monospace;}
+.summary-card,.card,.mh-card,.meta-pill,.fx-strip,.market-hours{background:linear-gradient(160deg,rgba(32,30,92,.92),rgba(18,20,60,.92))!important;border:1px solid rgba(0,240,255,.35)!important;box-shadow:var(--shadow);}
+.summary-card.pnl-hero{border-color:#ff2bd6!important;box-shadow:0 0 18px rgba(255,43,214,.35),inset 0 0 22px rgba(255,43,214,.12);}
+.card:hover,.card.open{border-color:#ff2bd6!important;box-shadow:0 0 16px rgba(255,43,214,.4);}
+.summary-card .tri-ccy{color:#0a0b24;background:#00f0ff;border-radius:3px;}
+.up{color:var(--red)!important;text-shadow:0 0 8px rgba(255,61,110,.55);}
+.down{color:var(--green)!important;text-shadow:0 0 8px rgba(43,255,154,.5);}
+.chip{background:rgba(20,22,61,.9)!important;border:1px solid #3b2f7a!important;color:var(--muted)!important;font-weight:600;}
+.chip.active{background:linear-gradient(90deg,#ff2bd6,#7a3cff)!important;border-color:#ff2bd6!important;color:#fff!important;box-shadow:0 0 12px rgba(255,43,214,.6);}
+.badge{background:rgba(0,0,0,.25);}
+.badge.warn-badge{color:#ffd400!important;border-color:#ffd400!important;background:rgba(255,212,0,.12)!important;box-shadow:0 0 8px rgba(255,212,0,.35);}
+.issue-tag{color:#ffd400!important;}
+.mh-card[data-market="CN"]{--mh-tint:#ffd400}.mh-card[data-market="HK"]{--mh-tint:#00f0ff}.mh-card[data-market="US"]{--mh-tint:#ff2bd6}
+.mh-count{color:#00f0ff;text-shadow:0 0 10px rgba(0,240,255,.7);}
+.mh-name{font-family:"Orbitron","Noto Sans SC",sans-serif;}
+button.primary,.login-card button[type="submit"]{background:linear-gradient(90deg,#ff2bd6,#00c8ff)!important;color:#fff!important;border:0;}
+html{background:#0a0b24;}
+body{background-attachment:scroll!important;}
+.view-bar{background:linear-gradient(180deg,rgba(10,11,36,.92) 70%,rgba(10,11,36,0))!important;}
+.sticky-pnl{background:rgba(20,22,61,.95)!important;border-color:#ff2bd6!important;}
