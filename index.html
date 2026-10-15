@@ -310,8 +310,9 @@
       user-select: none;
     }
 
-    .up { color: var(--green); }
-    .down { color: var(--red); }
+    /* 红涨绿跌（A股/港股习惯） */
+    .up { color: var(--red); }
+    .down { color: var(--green); }
     .flat { color: var(--muted); }
 
     .fx-note {
@@ -1120,8 +1121,12 @@
 
     <div class="summary" id="summary">
       <div class="summary-card pnl-hero">
-        <div class="label">浮动盈亏（USD）</div>
-        <div class="value" id="sumPnl">加载中</div>
+        <div class="label">浮动盈亏</div>
+        <div class="tri" aria-label="浮动盈亏三币种">
+          <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumPnl">加载中</span></div>
+          <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumPnlHkd">HK$—</span></div>
+          <div class="tri-row"><span class="tri-ccy">CNY</span><span class="tri-v" id="sumPnlCny">¥—</span></div>
+        </div>
         <div class="sub" id="sumPnlPct">—</div>
       </div>
       <div class="summary-card">
@@ -2197,7 +2202,7 @@
       sticky.classList.toggle("show", show);
       if (!show) return;
       sticky.querySelector(".v").textContent = el("sumPnl").textContent;
-      sticky.querySelector(".v").className = "v " + el("sumPnl").className.replace("value", "").trim();
+      sticky.querySelector(".v").className = "v " + el("sumPnl").className.replace("tri-v", "").replace("value", "").trim();
       el("stickyPnlPct").textContent = el("sumPnlPct").textContent;
       el("stickyPnlPct").className = "s " + el("sumPnlPct").className.replace("sub", "").trim();
     }
@@ -2356,6 +2361,8 @@
         el("sumMvHkd").textContent = "HK$—";
         el("sumMvCny").textContent = "¥—";
         el("sumPnl").textContent = "加载中";
+        el("sumPnlHkd").textContent = "HK$—";
+        el("sumPnlCny").textContent = "¥—";
         el("sumPnlPct").textContent = "—";
         el("sumFxHkd").textContent = "—";
         el("sumFxCny").textContent = "—";
@@ -2371,8 +2378,14 @@
       el("sumMv").textContent = mvTri.usd;
       el("sumMvHkd").textContent = mvTri.hkd;
       el("sumMvCny").textContent = mvTri.cny;
-      el("sumPnl").textContent = fmtMoney(pnl, "USD");
-      el("sumPnl").className = "value " + pnlClass(pnl);
+      const pnlTri = fmtTriCurrency(pnl);
+      const pnlSign = (t) => (pnl > 0 ? "+" : "") + t;
+      el("sumPnl").textContent = pnlSign(pnlTri.usd);
+      el("sumPnl").className = "tri-v " + pnlClass(pnl);
+      el("sumPnlHkd").textContent = pnlSign(pnlTri.hkd);
+      el("sumPnlHkd").className = "tri-v " + pnlClass(pnl);
+      el("sumPnlCny").textContent = pnlSign(pnlTri.cny);
+      el("sumPnlCny").className = "tri-v " + pnlClass(pnl);
       el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
       el("sumPnlPct").className = "sub " + pnlClass(pnl);
 
