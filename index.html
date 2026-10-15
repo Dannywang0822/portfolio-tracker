@@ -253,7 +253,7 @@
 
     .summary {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr));
       gap: 10px;
       margin: 14px 0 12px;
     }
@@ -315,17 +315,34 @@
       text-overflow: ellipsis;
     }
 
-    .summary-card .tri { display: flex; flex-direction: column; gap: 3px; }
+    .summary-card .tri { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .summary-card .tri-row {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+      display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
       font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.98rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3;
+      font-size: clamp(0.82rem, 2.6vw, 0.98rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.35;
+      min-width: 0;
     }
     .summary-card .tri-ccy {
+      flex: 0 0 auto;
       font-size: 0.62rem; font-weight: 600; color: var(--muted);
       padding: 1px 5px; border: 1px solid var(--border); border-radius: 6px; letter-spacing: 0.04em;
     }
-    .summary-card .tri-v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-card .tri-v {
+      flex: 1 1 auto; min-width: 0; text-align: right;
+      white-space: nowrap; overflow: visible; font-variant-numeric: tabular-nums;
+      font-size: clamp(0.84rem, 3.2vw, 1.05rem);
+    }
+    .summary-card.pnl-hero .tri-row:first-child .tri-v {
+      font-size: clamp(1.2rem, 5.2vw, 1.7rem);
+      font-weight: 700; letter-spacing: -0.03em;
+    }
+    .summary-card.pnl-hero .tri-row:not(:first-child) .tri-v {
+      font-size: clamp(0.78rem, 2.8vw, 0.92rem);
+      font-weight: 600; color: var(--muted);
+    }
+    .summary-card:not(.pnl-hero) .tri-row:first-child .tri-v {
+      font-size: clamp(0.95rem, 3.4vw, 1.12rem);
+    }
     .badge.warn-badge { color: #fbbf24; border-color: rgba(251, 191, 36, 0.55); background: rgba(251, 191, 36, 0.08); }
     .card.has-issue { border-color: rgba(251, 191, 36, 0.55); }
     .issue-tag { margin-top: 4px; font-size: 0.7rem; color: #fbbf24; }
@@ -539,7 +556,7 @@
     }
 
     @media (min-width: 1100px) {
-      .wrap { max-width: 960px; }
+      .wrap { max-width: 980px; }
     }
 
     .status-row {
@@ -567,8 +584,23 @@
     @media (min-width: 520px) {
       .wrap { padding: 0 18px 28px; }
       .app-header { margin: 0 -18px; padding-left: 18px; padding-right: 18px; }
-      .summary { grid-template-columns: repeat(2, 1fr); }
       .brand h1 { font-size: 1.35rem; }
+    }
+
+    /* Foldable / mid widths: summary can share one row */
+    @media (min-width: 600px) {
+      .wrap { max-width: 880px; }
+      .summary {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 12px;
+      }
+      .summary-card.pnl-hero { grid-column: auto; padding: 14px 14px 12px; }
+      .summary-card.pnl-hero .tri-row:first-child .tri-v { font-size: clamp(1.05rem, 2.4vw, 1.45rem); }
+      .market-hours-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    }
+
+    @media (min-width: 720px) {
+      .wrap { max-width: 920px; }
     }
 
     /* Login gate (lightweight client-side only) */
@@ -800,7 +832,6 @@
       .summary-card .value { font-size: 1.02rem; }
       .summary-card.pnl-hero .value { font-size: 1.4rem; }
       .summary-card .ccy-multi { font-size: 0.62rem; }
-      .summary-card .tri-row { font-size: 0.8rem; gap: 4px; }
       .summary-card .tri-ccy { font-size: 0.55rem; padding: 0 4px; }
       .fx-strip { font-size: 0.62rem; padding: 4px 8px; gap: 2px 6px; }
       .toolbar-actions { gap: 5px; }
@@ -953,7 +984,7 @@
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
       gap: 9px;
     }
     .mh-card {
@@ -1103,20 +1134,17 @@
     }
     .mh-holiday strong { font-weight: 600; color: #ffe4e6; }
     @media (max-width: 480px) {
-      .market-hours { padding: 12px 10px 10px; margin: 8px 0 14px; }
+      .market-hours { padding: 12px 10px 10px; margin: 8px 0 12px; }
       .market-hours-grid { gap: 8px; }
-      .mh-card { padding: 10px 8px 9px; border-radius: 12px; min-height: 0; }
-      .mh-name { font-size: 0.78rem; }
-      .mh-count { font-size: 0.9rem; }
-      .mh-status { font-size: 0.58rem; padding: 2px 5px; gap: 4px; max-width: 100%; }
+      .mh-card { padding: 10px 10px 9px; border-radius: 12px; min-height: 0; }
+      .mh-name { font-size: 0.8rem; }
+      .mh-count { font-size: 0.95rem; }
+      .mh-status { font-size: 0.6rem; padding: 2px 6px; gap: 4px; max-width: 100%; }
       .mh-sub { display: none; }
-      .mh-holiday { margin-top: 6px; padding: 4px 5px; font-size: 0.58rem; }
-      .mh-top { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .mh-holiday { margin-top: 6px; padding: 4px 6px; font-size: 0.58rem; }
       .summary { gap: 8px; margin: 10px 0 8px; }
       .summary-card { padding: 12px 12px 10px; }
       .summary-card.pnl-hero { padding: 14px 14px 12px; }
-      .summary-card.pnl-hero .value, .summary-card .tri-v { font-size: 0.95rem; }
-      .summary-card.pnl-hero .tri-v { font-size: 1.05rem; }
       .view-bar { gap: 6px; padding: 6px 0 4px; margin-bottom: 10px; }
       .chip { padding: 6px 10px; min-height: 32px; font-size: 0.74rem; }
       .card { min-height: 140px; padding: 11px 10px 9px; }
@@ -1126,14 +1154,39 @@
       .brand h1 { font-size: 1.05rem; }
       button#logoutBtn { padding: 0 8px; }
       .sync-bar .meta-pill #statusText { max-width: min(52vw, 220px); }
+      .wrap { padding-bottom: calc(28px + var(--sync-bar-h) + var(--safe-bottom)) !important; }
     }
-    @media (max-width: 420px) {
+
+    /* Phone ≤430: stack market cards as compact rows; clear summary hierarchy */
+    @media (max-width: 430px) {
+      .summary { grid-template-columns: 1fr; gap: 8px; }
+      .summary-card.pnl-hero { grid-column: auto; }
+      .summary-card .tri-row { gap: 10px; }
+      .summary-card .tri-v { overflow: visible; text-overflow: clip; }
       .market-hours-grid { grid-template-columns: 1fr; gap: 8px; }
-      .mh-card { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "top count" "label count" "holiday holiday"; column-gap: 10px; align-items: center; padding: 10px 12px; }
-      .mh-top { grid-area: top; flex-direction: row; align-items: center; width: 100%; margin-bottom: 0; }
+      .mh-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: "top count" "label count" "holiday holiday";
+        column-gap: 12px;
+        align-items: center;
+        padding: 11px 12px;
+      }
+      .mh-top { grid-area: top; flex-direction: row; align-items: center; width: 100%; margin-bottom: 0; gap: 8px; }
       .mh-count-label { grid-area: label; margin-bottom: 0; }
-      .mh-count { grid-area: count; font-size: 1.05rem; text-align: right; }
+      .mh-count { grid-area: count; font-size: 1.12rem; text-align: right; letter-spacing: -0.02em; }
       .mh-holiday { grid-area: holiday; }
+      .sync-bar { gap: 6px; padding: 8px 10px calc(8px + var(--safe-bottom)); }
+    }
+
+    /* Landscape phone / narrow fold outer: keep rows usable */
+    @media (max-width: 430px) and (orientation: landscape) {
+      .summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+      .summary-card.pnl-hero { grid-column: 1 / -1; }
+      .market-hours-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .mh-card { display: block; padding: 8px 8px 7px; }
+      .mh-top { margin-bottom: 6px; }
+      .mh-count { text-align: left; font-size: 0.92rem; }
     }
 
     .empty-filter {

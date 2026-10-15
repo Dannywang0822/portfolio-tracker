@@ -41,3 +41,55 @@ body{background-attachment:scroll!important;}
 .sticky-pnl{background:rgba(20,22,61,.95)!important;border-color:#ff2bd6!important;}
 .sync-bar{background:rgba(10,11,36,.92)!important;border-top:1px solid #ff2bd6!important;box-shadow:0 -1px 18px rgba(255,43,214,.35);}
 .sync-bar .meta-pill{background:rgba(20,22,61,.95)!important;border-color:rgba(0,240,255,.35)!important;}
+
+/* —— Responsive polish (phone + foldable) —— */
+.summary, .market-hours-grid { min-width: 0; }
+.summary-card, .mh-card { min-width: 0; }
+.summary-card .tri-v { color: inherit; }
+.summary-card.pnl-hero .tri-row:first-child .tri-v { text-shadow: 0 0 12px rgba(255,43,214,.28); }
+.summary-card:not(.pnl-hero) .label { letter-spacing: .08em; }
+
+@media (max-width: 430px) {
+  .market-hours {
+    padding: 11px 10px 10px !important;
+    margin: 8px 0 12px !important;
+  }
+  .mh-card {
+    background:
+      radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--mh-tint, #64748b) 18%, transparent), transparent 55%),
+      rgba(12, 14, 40, 0.88) !important;
+  }
+  .mh-count {
+    font-size: 1.14rem !important;
+    text-shadow: 0 0 10px rgba(0,240,255,.55);
+  }
+  .summary-card.pnl-hero {
+    padding: 14px 14px 12px !important;
+  }
+  .summary-card:not(.pnl-hero) {
+    padding: 12px 12px 10px !important;
+  }
+  .summary-card .tri { gap: 5px; }
+  .sync-bar {
+    padding-left: max(10px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  }
+}
+
+/* Mid / foldable: keep neon cards airy when 3-up */
+@media (min-width: 600px) and (max-width: 900px) {
+  .summary-card { padding: 13px 13px 11px; }
+  .mh-card { padding: 12px 11px 11px; }
+  .mh-count { font-size: 1.05rem; }
+  .market-hours { margin: 12px 0 16px; }
+}
+
+/* Avoid sticky header / sync-bar collisions */
+.app-header {
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
+.wrap {
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
