@@ -264,6 +264,21 @@
       text-overflow: ellipsis;
     }
 
+    .summary-card .tri { display: flex; flex-direction: column; gap: 3px; }
+    .summary-card .tri-row {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.98rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3;
+    }
+    .summary-card .tri-ccy {
+      font-size: 0.62rem; font-weight: 600; color: var(--muted);
+      padding: 1px 5px; border: 1px solid var(--border); border-radius: 6px; letter-spacing: 0.04em;
+    }
+    .summary-card .tri-v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .badge.warn-badge { color: #fbbf24; border-color: rgba(251, 191, 36, 0.55); background: rgba(251, 191, 36, 0.08); }
+    .card.has-issue { border-color: rgba(251, 191, 36, 0.55); }
+    .issue-tag { margin-top: 4px; font-size: 0.7rem; color: #fbbf24; }
+
     .fx-strip {
       grid-column: 1 / -1;
       display: flex;
@@ -732,6 +747,8 @@
       .summary-card .value { font-size: 1.02rem; }
       .summary-card.pnl-hero .value { font-size: 1.4rem; }
       .summary-card .ccy-multi { font-size: 0.62rem; }
+      .summary-card .tri-row { font-size: 0.8rem; gap: 4px; }
+      .summary-card .tri-ccy { font-size: 0.55rem; padding: 0 4px; }
       .fx-strip { font-size: 0.62rem; padding: 4px 8px; gap: 2px 6px; }
       .toolbar { gap: 6px; }
       .toolbar-actions { gap: 5px; width: 100%; margin-left: 0; justify-content: stretch; }
@@ -1109,19 +1126,19 @@
       </div>
       <div class="summary-card">
         <div class="label">总成本</div>
-        <div class="value" id="sumCost">加载中</div>
-        <div class="ccy-multi" id="sumCostMulti" aria-label="总成本多币种">
-          <span id="sumCostHkd">HK$—</span>
-          <span id="sumCostCny">¥—</span>
+        <div class="tri" aria-label="总成本三币种">
+          <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumCost">加载中</span></div>
+          <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumCostHkd">HK$—</span></div>
+          <div class="tri-row"><span class="tri-ccy">CNY</span><span class="tri-v" id="sumCostCny">¥—</span></div>
         </div>
         <div class="sub" id="sumCostSub">USD · HKD · CNY</div>
       </div>
       <div class="summary-card">
         <div class="label">总市值</div>
-        <div class="value" id="sumMv">加载中</div>
-        <div class="ccy-multi" id="sumMvMulti" aria-label="总市值多币种">
-          <span id="sumMvHkd">HK$—</span>
-          <span id="sumMvCny">¥—</span>
+        <div class="tri" aria-label="总市值三币种">
+          <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumMv">加载中</span></div>
+          <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumMvHkd">HK$—</span></div>
+          <div class="tri-row"><span class="tri-ccy">CNY</span><span class="tri-v" id="sumMvCny">¥—</span></div>
         </div>
         <div class="sub" id="sumMvSub">USD · HKD · CNY</div>
       </div>
@@ -1250,8 +1267,9 @@
         </div>
       </div>
       <div class="hm-field">
-        <label for="hmCurrency">币种（自动对应市场）</label>
+        <label for="hmCurrency">币种（必选，须与市场一致）</label>
         <select id="hmCurrency" name="currency" required>
+          <option value="" disabled selected>请选择货币</option>
           <option value="USD">USD · 美股</option>
           <option value="HKD">HKD · 港股</option>
           <option value="CNY">CNY · A股</option>
@@ -1599,49 +1617,138 @@
       return y;
     }
 
-    function loadCustomHoldings() {
+    /** 由代码推断市场币种：.SZ/.SS/6位数字 → CNY；.HK/4-5位数字 → HKD；字母 → USD */
+    function inferCurrencyFromCode(raw) {
+      const u = String(raw || "").trim().toUpperCase();
+      if (!u) return null;
+      if (/\.(SZ|SS|SH)$/.test(u) || /^(SZ|SH)?\d{6}$/.test(u)) return "CNY";
+      if (/\.HK$/.test(u) || /^\d{4,5}$/.test(u)) return "HKD";
+      if (/^[A-Z][A-Z.\-]{0,9}$/.test(u)) return "USD";
+      return null;
+    }
+    const CCY_RULE_MSG = {
+      CNY: "A股代码只能选人民币 CNY",
+      HKD: "港股代码只能选港币 HKD",
+      USD: "美股代码只能选美元 USD",
+    };
+    function currencyMismatchMsg(code, currency) {
+      const need = inferCurrencyFromCode(code);
+      if (need && currency && need !== currency) return CCY_RULE_MSG[need];
+      return null;
+    }
+
+    const CUSTOM_BACKUP_KEY = "portfolio-custom-holdings-backup";
+    const CUSTOM_DELETED_KEY = "portfolio-custom-deleted-ids";
+
+    function readJsonArray(key) {
       try {
-        const raw = localStorage.getItem(CUSTOM_KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        if (!Array.isArray(arr)) return [];
-        let changed = false;
-        const list = arr
-          .filter((h) => h && h.id && (h.yahoo || h.ticker) && h.name)
-          .map((h) => {
-            let currency = h.currency === "HKD" || h.currency === "CNY" || h.currency === "USD" ? h.currency : "USD";
-            const account = normalizeAccount(h.account);
-            let yahoo = resolveHoldingYahoo({ ...h, currency });
-            // 币种按交易所后缀纠正：.SZ/.SS 必为 CNY，.HK 必为 HKD（旧数据误存 USD 会让合计虚高 ~7 倍）
-            const sufCur = currencyFromSuffix(yahoo);
-            if (sufCur && sufCur !== currency) {
-              currency = sufCur;
-              yahoo = resolveHoldingYahoo({ ...h, currency });
-              changed = true;
-            }
-            if (String(h.yahoo).trim() !== yahoo || normalizeAccount(h.account) !== account) changed = true;
-            return {
-              id: String(h.id),
-              name: String(h.name),
-              ticker: yahoo,
-              yahoo,
-              shares: Number(h.shares) || 0,
-              avgCost: Number(h.avgCost) || 0,
-              currency,
-              account,
-              market: MARKET_FROM_CURRENCY[currency] || "us",
-              custom: true,
-            };
-          });
-        if (changed) {
-          try {
-            localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
-          } catch (e) { /* ignore */ }
+        const v = JSON.parse(localStorage.getItem(key) || "null");
+        return Array.isArray(v) ? v : null;
+      } catch (e) { return null; }
+    }
+    function deletedIds() {
+      return new Set(readJsonArray(CUSTOM_DELETED_KEY) || []);
+    }
+    function pushBackup(raw) {
+      if (!raw) return;
+      try {
+        const hist = readJsonArray(CUSTOM_BACKUP_KEY) || [];
+        if (hist.length && hist[hist.length - 1].raw === raw) return;
+        hist.push({ at: new Date().toISOString(), raw });
+        while (hist.length > 15) hist.shift();
+        localStorage.setItem(CUSTOM_BACKUP_KEY, JSON.stringify(hist));
+      } catch (e) { /* ignore */ }
+    }
+
+    /** 从备份/其它旧 key 中找回当前列表里没有、且未被用户主动删除的手动行 */
+    function recoverLostRows(current) {
+      const have = new Set();
+      for (const h of current) { if (h && h.id) have.add(h.id); if (h && h.origId) have.add(h.origId); }
+      const gone = deletedIds();
+      const found = [];
+      const consider = (arr) => {
+        for (const h of arr || []) {
+          if (!h || typeof h !== "object" || !(h.yahoo || h.ticker || h.name)) continue;
+          if (h.id && (have.has(h.id) || gone.has(h.id))) continue;
+          const sigOf = (x) => [bareTicker(String(x.yahoo || x.ticker || "").toUpperCase()), normalizeAccount(x.account), Number(x.shares), Number(x.avgCost)].join("|");
+          const sig = sigOf(h);
+          if (current.concat(found).some((x) => x && sigOf(x) === sig)) continue;
+          found.push({ ...h, recovered: true });
+          if (h.id) have.add(h.id);
         }
-        return list;
-      } catch (e) {
-        return [];
+      };
+      for (const b of readJsonArray(CUSTOM_BACKUP_KEY) || []) {
+        try { consider(JSON.parse(b.raw)); } catch (e) { /* ignore */ }
       }
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || k === CUSTOM_KEY || k === CUSTOM_BACKUP_KEY || k === CUSTOM_DELETED_KEY || k === QUOTE_CACHE_KEY) continue;
+          if (!/custom|holding|portfolio/i.test(k)) continue;
+          const arr = readJsonArray(k);
+          if (arr && arr.some((h) => h && typeof h === "object" && "shares" in h)) consider(arr);
+        }
+      } catch (e) { /* ignore */ }
+      return found;
+    }
+
+    /**
+     * 读取手动持仓：绝不丢行、绝不悄悄改用户填的币种。
+     * 信息不全或币种与市场不符的行照样展示，带 issues 警告，等用户编辑。
+     */
+    function loadCustomHoldings() {
+      let raw = null;
+      try { raw = localStorage.getItem(CUSTOM_KEY); } catch (e) { return []; }
+      let arr = null;
+      try { arr = raw ? JSON.parse(raw) : []; } catch (e) { arr = null; }
+      if (!Array.isArray(arr)) {
+        // 损坏数据：先备份原文，避免之后保存时被覆盖
+        pushBackup(raw);
+        arr = [];
+      }
+      let changed = false;
+      const recovered = recoverLostRows(arr);
+      if (recovered.length) { arr = arr.concat(recovered); changed = true; }
+      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
+      const seen = new Set();
+      const list = arr.map((h, i) => {
+        h = h && typeof h === "object" ? h : {};
+        const issues = [];
+        let id = h.id ? String(h.id) : "";
+        const origId = h.origId || (id && (builtinIds.has(id) || seen.has(id)) ? id : undefined);
+        if (!id || builtinIds.has(id) || seen.has(id)) {
+          id = "custom-fix-" + i + "-" + Math.random().toString(36).slice(2, 7);
+          changed = true;
+        }
+        seen.add(id);
+        const code = String(h.yahoo || h.ticker || "").trim();
+        const stored = ["HKD", "CNY", "USD"].includes(h.currency) ? h.currency : null;
+        const need = inferCurrencyFromCode(code);
+        const currency = stored || need || "USD";
+        if (!stored) issues.push("未选择货币，请编辑选择");
+        else if (need && need !== stored) issues.push(CCY_RULE_MSG[need] + `（当前 ${stored}）`);
+        if (!h.name) issues.push("缺名称");
+        if (!code) issues.push("缺代码");
+        const yahoo = code ? resolveHoldingYahoo({ ...h, yahoo: code, currency: need || currency }) : "";
+        if (h.recovered) issues.push("已从备份恢复，请核对");
+        return {
+          id,
+          name: String(h.name || code || "未命名持仓"),
+          ticker: yahoo || code,
+          yahoo: yahoo || code,
+          shares: Number(h.shares) || 0,
+          avgCost: Number(h.avgCost) || 0,
+          currency,
+          storedCurrency: stored,
+          account: normalizeAccount(h.account),
+          market: MARKET_FROM_CURRENCY[currency] || "us",
+          custom: true,
+          origId,
+          issues,
+        };
+      });
+      if (changed) saveCustomHoldings(list);
+      return list;
     }
 
     function currencyFromSuffix(y) {
@@ -1652,7 +1759,16 @@
     }
 
     function saveCustomHoldings(list) {
-      localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+      try {
+        pushBackup(localStorage.getItem(CUSTOM_KEY));
+        const clean = list.map((h) => {
+          const { issues, storedCurrency, recovered, ...rest } = h;
+          // 保留用户原选币种（未选则不写），不悄悄改
+          if (issues !== undefined) rest.currency = storedCurrency || undefined;
+          return rest;
+        });
+        localStorage.setItem(CUSTOM_KEY, JSON.stringify(clean));
+      } catch (e) { /* ignore */ }
     }
 
     // 内置 + 手动拼接；同一 yahoo 不同 account 保留多行，绝不按代码/名称去重
@@ -2116,6 +2232,9 @@
         const pnlText = loading ? "—" : (missing ? "N/A" : fmtMoney(pnl, h.currency));
         const pnlPctText = loading ? "—" : (missing ? "N/A" : fmtPct(pnlPct));
         const customBadge = h.custom ? `<span class="badge custom-badge">手动</span>` : "";
+        const hasIssue = h.issues && h.issues.length;
+        const warnBadge = hasIssue ? `<span class="badge warn-badge">⚠ 待修正</span>` : "";
+        const issueTag = hasIssue ? `<div class="issue-tag">⚠ ${escapeHtml(h.issues.join("；"))} · 点开后「编辑」</div>` : "";
         const needWatch =
           h.custom && missing && !loading
             ? `<button type="button" data-watchlist="${escapeHtml(h.yahoo)}">加入定时行情</button>`
@@ -2129,7 +2248,7 @@
           : "";
 
         return `
-          <article class="card${isOpen}" data-id="${escapeHtml(h.id)}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
+          <article class="card${isOpen}${hasIssue ? " has-issue" : ""}" data-id="${escapeHtml(h.id)}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
             <div class="pos-head">
               <div class="pos-name">${escapeHtml(h.name)}</div>
               <div class="pos-ticker">
@@ -2137,7 +2256,9 @@
                 <span class="badge mkt-${escapeHtml(h.currency)}">${mkt}</span>
                 <span class="badge acct-${escapeHtml(h.account || "")}">${accountLabel(h.account)}</span>
                 ${customBadge}
+                ${warnBadge}
               </div>
+              ${issueTag}
               ${stale}
             </div>
             <div class="card-face">
@@ -2198,8 +2319,13 @@
       const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
 
       const missingQuote = [];
+      const badCcy = [];
       const summaryList = filteredHoldings();
       for (const h of summaryList) {
+        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) {
+          badCcy.push(h.name || h.ticker);
+          continue;
+        }
         const q = lastGood[h.id];
         if (!q || q.price == null) {
           allReady = false;
@@ -2275,6 +2401,13 @@
         fxNote.style.display = "block";
         fxNote.className = "fx-note warn";
         fxNote.textContent = (missingFx ? fxNote.textContent + " " : "") + msg;
+      }
+      if (badCcy.length) {
+        const msg = `${badCcy.length} 只手动持仓币种与市场不符/未选，暂未计入合计，请编辑修正：${badCcy.join("、")}`;
+        const prev = fxNote.style.display === "block" ? fxNote.textContent + " " : "";
+        fxNote.style.display = "block";
+        fxNote.className = "fx-note warn";
+        fxNote.textContent = prev + msg;
       }
       syncStickyPnl();
     }
@@ -2507,13 +2640,13 @@
         el("hmYahoo").value = editHolding.yahoo;
         el("hmShares").value = editHolding.shares;
         el("hmAvgCost").value = editHolding.avgCost;
-        el("hmCurrency").value = editHolding.currency || "USD";
+        el("hmCurrency").value = ["USD", "HKD", "CNY"].includes(editHolding.currency) ? editHolding.currency : "";
         el("hmAccount").value = editHolding.account || "futu";
       } else {
         el("holdingModalTitle").textContent = "新增持仓";
         el("hmEditId").value = "";
         form.reset();
-        el("hmCurrency").value = "USD";
+        el("hmCurrency").value = "";
         el("hmAccount").value = "futu";
       }
       modal.hidden = false;
@@ -2540,6 +2673,11 @@
 
     function deleteCustomHolding(id) {
       const list = loadCustomHoldings().filter((h) => h.id !== id);
+      try {
+        const gone = deletedIds();
+        gone.add(id);
+        localStorage.setItem(CUSTOM_DELETED_KEY, JSON.stringify([...gone].slice(-200)));
+      } catch (e) { /* ignore */ }
       saveCustomHoldings(list);
       delete lastGood[id];
     }
@@ -2556,16 +2694,19 @@
     el("holdingForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = el("hmName").value.trim();
-      let currency = el("hmCurrency").value;
+      const currency = el("hmCurrency").value;
       const rawYahoo = el("hmYahoo").value.trim();
-      // 六位 A 股代码若仍选着默认 USD，自动改成 CNY，避免市场筛选/后缀推断错误
-      if (/^(SZ|SH)?\d{6}(\.(SZ|SS))?$/i.test(rawYahoo) && currency === "USD") {
-        currency = "CNY";
-        el("hmCurrency").value = "CNY";
+      const err0 = el("hmError");
+      if (!["USD", "HKD", "CNY"].includes(currency)) {
+        err0.textContent = "请选择货币（CNY / HKD / USD）";
+        err0.classList.add("show");
+        return;
       }
-      if (/^\d{1,5}(\.HK)?$/i.test(rawYahoo) && currency === "USD" && /\.HK$/i.test(rawYahoo)) {
-        currency = "HKD";
-        el("hmCurrency").value = "HKD";
+      const ccyErr = currencyMismatchMsg(rawYahoo, currency);
+      if (ccyErr) {
+        err0.textContent = ccyErr;
+        err0.classList.add("show");
+        return;
       }
       const yahoo = resolveHoldingYahoo({ name, yahoo: rawYahoo, ticker: rawYahoo, currency });
       const shares = Number(el("hmShares").value);
