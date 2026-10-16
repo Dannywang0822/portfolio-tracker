@@ -612,7 +612,7 @@
       .wrap { max-width: 920px; }
     }
 
-    /* Login gate (lightweight client-side only) */
+    /* Auth gate (local fallback + future Firebase) */
     .login-gate {
       position: fixed;
       inset: 0;
@@ -622,30 +622,68 @@
       justify-content: center;
       padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
       background:
-        radial-gradient(900px 480px at 8% -8%, rgba(59, 130, 246, 0.18), transparent 50%),
-        radial-gradient(700px 400px at 95% 0%, rgba(34, 197, 94, 0.1), transparent 45%),
+        radial-gradient(900px 480px at 8% -8%, rgba(255, 43, 214, 0.22), transparent 50%),
+        radial-gradient(700px 400px at 95% 0%, rgba(0, 240, 255, 0.16), transparent 45%),
         var(--bg);
     }
     .login-gate[hidden] { display: none !important; }
-    .login-card {
+    .login-card, .auth-card {
       width: 100%;
-      max-width: 360px;
+      max-width: 400px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 28px 22px 22px;
+      padding: 26px 22px 20px;
       box-shadow: var(--shadow);
     }
-    .login-card h1 {
-      font-size: 1.25rem;
+    .auth-card .auth-brand {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .auth-card .auth-brand h1 {
+      font-size: 1.2rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      margin-bottom: 4px;
+      margin: 0 0 4px;
     }
-    .login-card .login-sub {
+    .auth-card .auth-brand .login-sub {
       color: var(--muted);
-      font-size: 0.82rem;
-      margin-bottom: 18px;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border-soft);
+    }
+    .auth-tabs button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 10px 12px;
+      min-height: 40px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .auth-tabs button.active {
+      background: linear-gradient(90deg, rgba(255,43,214,.35), rgba(0,240,255,.28));
+      color: var(--text);
+      box-shadow: 0 0 12px rgba(255,43,214,.25);
+    }
+    .login-card h1, .auth-panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0 0 12px;
     }
     .login-field {
       margin-bottom: 12px;
@@ -669,19 +707,45 @@
       border-radius: 10px;
       min-height: 44px;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
     }
     .login-field input:focus {
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.12);
     }
-    .login-error {
+    .login-field input:disabled {
+      opacity: 0.65;
+    }
+    .login-error, .auth-msg {
       display: none;
-      color: var(--red);
       font-size: 0.8rem;
       margin: 0 0 10px;
+      line-height: 1.4;
     }
-    .login-error.show { display: block; }
-    .login-card button[type="submit"] {
+    .login-error { color: var(--red); }
+    .login-error.show, .auth-msg.show { display: block; }
+    .auth-msg.info { color: var(--muted); }
+    .auth-msg.ok { color: var(--green); }
+    .auth-links {
+      display: flex;
+      justify-content: flex-end;
+      margin: -4px 0 12px;
+    }
+    .auth-links button {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--accent);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 2px;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .login-card button[type="submit"], .auth-card button[type="submit"] {
       appearance: none;
       width: 100%;
       border: 1px solid rgba(59, 130, 246, 0.45);
@@ -697,14 +761,47 @@
       touch-action: manipulation;
       margin-top: 4px;
     }
-    .login-card button[type="submit"]:active { transform: scale(0.98); }
-    .login-note {
+    .login-card button[type="submit"]:active,
+    .auth-card button[type="submit"]:active { transform: scale(0.98); }
+    .login-card button[type="submit"]:disabled,
+    .auth-card button[type="submit"]:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+    .login-note, .auth-note {
       margin-top: 14px;
       font-size: 0.7rem;
       color: var(--dim);
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.45;
     }
+    .auth-mode-pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .auth-mode-pill.cloud {
+      color: #00f0ff;
+      border-color: rgba(0,240,255,.45);
+    }
+    .auth-back {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      margin-bottom: 10px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .auth-panel[hidden] { display: none !important; }
     button#logoutBtn {
       appearance: none;
       border: 1px solid var(--border);
@@ -722,6 +819,38 @@
     }
     button#logoutBtn:active { transform: scale(0.97); }
     #appRoot[hidden] { display: none !important; }
+
+    /* Delete confirm */
+    .confirm-modal {
+      position: fixed; inset: 0; z-index: 220;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6);
+      padding: 16px;
+    }
+    .confirm-modal[hidden] { display: none !important; }
+    .confirm-card {
+      width: min(360px, 100%);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px 14px;
+      box-shadow: var(--shadow);
+    }
+    .confirm-card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .confirm-card p { margin: 0 0 14px; color: var(--muted); font-size: 0.85rem; line-height: 1.45; }
+    .confirm-actions { display: flex; gap: 8px; }
+    .confirm-actions button {
+      flex: 1; appearance: none; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font: inherit; font-weight: 600;
+      font-size: 0.9rem; padding: 12px; min-height: 44px; border-radius: 12px;
+      cursor: pointer; touch-action: manipulation;
+    }
+    .confirm-actions button.danger {
+      background: rgba(255,61,110,.18);
+      border-color: rgba(255,61,110,.5);
+      color: #ff8fad;
+    }
+
 
     /* H5: filter / sort bar */
     .view-bar {
@@ -1213,23 +1342,76 @@
   <link rel="stylesheet" href="./theme-cyberpunk.css" />
 </head>
 <body>
-  <!-- Lightweight client-side gate only; not real security -->
+  <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
   <div class="login-gate" id="loginGate" hidden>
-    <form class="login-card" id="loginForm" autocomplete="on">
-      <h1>持仓跟踪</h1>
-      <p class="login-sub">请登录后查看持仓</p>
-      <div class="login-field">
-        <label for="loginUser">用户名</label>
-        <input id="loginUser" name="username" type="text" autocomplete="username" required autofocus />
+    <div class="login-card auth-card">
+      <div class="auth-brand">
+        <h1>持仓跟踪</h1>
+        <p class="login-sub">邮箱登录后多端同步持仓（Firebase 接入中）</p>
       </div>
-      <div class="login-field">
-        <label for="loginPass">密码</label>
-        <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
+      <div class="auth-tabs" role="tablist" aria-label="登录或注册">
+        <button type="button" role="tab" id="tabLogin" data-auth-tab="login" class="active" aria-selected="true">登录</button>
+        <button type="button" role="tab" id="tabRegister" data-auth-tab="register" aria-selected="false">注册</button>
       </div>
-      <p class="login-error" id="loginError" role="alert">用户名或密码错误</p>
-      <button type="submit">登录</button>
-      <p class="login-note">轻量访问门禁 · 仅保存在本机浏览器，不构成真实安全防护</p>
-    </form>
+
+      <div class="auth-panel" id="panelLogin" data-auth-panel="login">
+        <form id="loginForm" autocomplete="on">
+          <div class="login-field">
+            <label for="loginEmail">邮箱</label>
+            <input id="loginEmail" name="email" type="text" inputmode="email" autocomplete="username" required autofocus placeholder="you@example.com" />
+          </div>
+          <div class="login-field">
+            <label for="loginPass">密码</label>
+            <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+          </div>
+          <div class="auth-links">
+            <button type="button" id="forgotLink">忘记密码？</button>
+          </div>
+          <p class="login-error" id="loginError" role="alert"></p>
+          <button type="submit" id="loginSubmit">登录</button>
+        </form>
+      </div>
+
+      <div class="auth-panel" id="panelRegister" data-auth-panel="register" hidden>
+        <form id="registerForm" autocomplete="on">
+          <div class="login-field">
+            <label for="regEmail">邮箱</label>
+            <input id="regEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          </div>
+          <div class="login-field">
+            <label for="regPass">密码（至少 6 位）</label>
+            <input id="regPass" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+          </div>
+          <div class="login-field">
+            <label for="regPass2">确认密码</label>
+            <input id="regPass2" name="password2" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+          </div>
+          <p class="login-error" id="registerError" role="alert"></p>
+          <button type="submit" id="registerSubmit">创建账号</button>
+        </form>
+      </div>
+
+      <div class="auth-panel" id="panelForgot" data-auth-panel="forgot" hidden>
+        <button type="button" class="auth-back" id="forgotBack">← 返回登录</button>
+        <p class="auth-panel-title">重置密码</p>
+        <form id="forgotForm" autocomplete="on">
+          <div class="login-field">
+            <label for="forgotEmail">注册邮箱</label>
+            <input id="forgotEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          </div>
+          <p class="login-error" id="forgotError" role="alert"></p>
+          <p class="auth-msg info" id="forgotInfo" role="status"></p>
+          <button type="submit" id="forgotSubmit">发送重置邮件</button>
+        </form>
+      </div>
+
+      <p class="login-note auth-note" id="authModeNote">
+        过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。
+      </p>
+      <div style="text-align:center">
+        <span class="auth-mode-pill" id="authModePill">LOCAL</span>
+      </div>
+    </div>
   </div>
 
   <div class="wrap" id="appRoot" hidden>
@@ -1400,7 +1582,7 @@
   <div class="holding-modal" id="holdingModal" hidden>
     <form class="holding-modal-card" id="holdingForm" autocomplete="off">
       <h2 id="holdingModalTitle">新增持仓</h2>
-      <p class="modal-sub">保存在本机浏览器 · 不会写入仓库</p>
+      <p class="modal-sub" id="holdingModalSub">可随意新增 / 修改字段 · 目前保存在本机，云端同步接入后多端一致</p>
       <input type="hidden" id="hmEditId" value="" />
       <div class="hm-field">
         <label for="hmName">名称</label>
@@ -1446,6 +1628,18 @@
     </form>
   </div>
 
+  <div class="confirm-modal" id="deleteConfirmModal" hidden>
+    <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+      <h3 id="deleteConfirmTitle">删除持仓？</h3>
+      <p id="deleteConfirmText">此操作不可撤销。删除后该行不再计入汇总。</p>
+      <div class="confirm-actions">
+        <button type="button" id="deleteConfirmCancel">取消</button>
+        <button type="button" class="danger" id="deleteConfirmOk">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./auth.js"></script>
   <script src="./market-hours.js"></script>
   <script>
     const HOLDINGS = [
@@ -2406,7 +2600,7 @@
             : "";
         const actions = h.custom
           ? `<div class="card-actions">
-              <button type="button" data-edit="${escapeHtml(h.id)}">编辑</button>
+              <button type="button" data-edit="${escapeHtml(h.id)}">编辑持仓</button>
               <button type="button" class="danger" data-delete="${escapeHtml(h.id)}">删除</button>
               ${needWatch}
             </div>`
@@ -2940,6 +3134,8 @@
       el("hmError").textContent = "";
       if (editHolding) {
         el("holdingModalTitle").textContent = "编辑持仓";
+        const sub = el("holdingModalSub");
+        if (sub) sub.textContent = "可随意改名称、代码、股数、成本、账户 · 同票不同券商请分行保存";
         el("hmEditId").value = editHolding.id;
         el("hmName").value = editHolding.name;
         el("hmYahoo").value = editHolding.yahoo;
@@ -2949,6 +3145,8 @@
         el("hmAccount").value = editHolding.account || "futu";
       } else {
         el("holdingModalTitle").textContent = "新增持仓";
+        const sub = el("holdingModalSub");
+        if (sub) sub.textContent = "可随意新增 · 目前保存在本机，云端同步接入后多端一致";
         el("hmEditId").value = "";
         form.reset();
         el("hmCurrency").value = "";
@@ -2993,7 +3191,9 @@
       if (e.target === el("holdingModal")) closeHoldingModal();
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !el("holdingModal").hidden) closeHoldingModal();
+      if (e.key !== "Escape") return;
+      if (!el("deleteConfirmModal").hidden) { closeDeleteConfirm(); return; }
+      if (!el("holdingModal").hidden) closeHoldingModal();
     });
 
     el("holdingForm").addEventListener("submit", (e) => {
@@ -3082,26 +3282,109 @@
         const id = delBtn.getAttribute("data-delete");
         const h = loadCustomHoldings().find((x) => x.id === id);
         if (!h) return;
-        if (!confirm(`确定删除手动持仓「${h.name}」？`)) return;
-        deleteCustomHolding(id);
-        renderCards();
-        renderSummary();
+        pendingDeleteId = id;
+        const acct = accountLabel(h.account);
+        el("deleteConfirmText").textContent =
+          `将永久删除「${h.name}」· ${acct} · ${fmtNum(h.shares, 0)} 股。此操作不可撤销，删除后不再计入汇总。`;
+        el("deleteConfirmModal").hidden = false;
       }
     });
 
-    /* Auth — lightweight client-side gate (not real security) */
-    const AUTH_USER = "danny";
-    const AUTH_PASS = "123";
-    const AUTH_KEY = "portfolio-tracker-logged-in";
+    /* Auth — PortfolioAuth stub (local until window.__FIREBASE_CONFIG__) */
+    const AUTH_KEY = (window.PortfolioAuth && PortfolioAuth.AUTH_KEY) || "portfolio-tracker-logged-in";
+    let pendingDeleteId = null;
 
     function isLoggedIn() {
-      return localStorage.getItem(AUTH_KEY) === "1";
+      return window.PortfolioAuth ? PortfolioAuth.isLoggedIn() : localStorage.getItem(AUTH_KEY) === "1";
     }
 
-    function setLoggedIn(on) {
-      if (on) localStorage.setItem(AUTH_KEY, "1");
+    function setLoggedIn(on, email) {
+      if (window.PortfolioAuth) PortfolioAuth.setLoggedIn(on, email);
+      else if (on) localStorage.setItem(AUTH_KEY, "1");
       else localStorage.removeItem(AUTH_KEY);
     }
+
+    function setAuthBusy(form, busy, labelIdle) {
+      const btn = form.querySelector('button[type="submit"]');
+      if (!btn) return;
+      btn.disabled = !!busy;
+      btn.textContent = busy ? "请稍候…" : labelIdle;
+      form.querySelectorAll("input").forEach((inp) => { inp.disabled = !!busy; });
+    }
+
+    function showAuthError(node, msg) {
+      if (!node) return;
+      node.textContent = msg || "";
+      node.classList.toggle("show", !!msg);
+    }
+
+    function refreshAuthModeUI() {
+      const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
+      const pill = el("authModePill");
+      const note = el("authModeNote");
+      if (pill) {
+        pill.textContent = cloud ? "CLOUD" : "LOCAL";
+        pill.classList.toggle("cloud", !!cloud);
+      }
+      if (note) {
+        note.textContent = cloud
+          ? "云端账号已配置（Firebase）· 邮箱注册登录后持仓将实时同步"
+          : "过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。";
+      }
+    }
+
+    function switchAuthPanel(name) {
+      const panels = ["login", "register", "forgot"];
+      panels.forEach((p) => {
+        const node = document.querySelector(`[data-auth-panel="${p}"]`);
+        if (node) node.hidden = p !== name;
+      });
+      const tabLogin = el("tabLogin");
+      const tabReg = el("tabRegister");
+      if (tabLogin && tabReg) {
+        const onLogin = name === "login" || name === "forgot";
+        tabLogin.classList.toggle("active", name === "login");
+        tabReg.classList.toggle("active", name === "register");
+        tabLogin.setAttribute("aria-selected", name === "login" ? "true" : "false");
+        tabReg.setAttribute("aria-selected", name === "register" ? "true" : "false");
+        // hide tabs visual emphasis on forgot — still show tabs
+        if (name === "forgot") {
+          tabLogin.classList.remove("active");
+          tabReg.classList.remove("active");
+        }
+      }
+      showAuthError(el("loginError"), "");
+      showAuthError(el("registerError"), "");
+      showAuthError(el("forgotError"), "");
+      const info = el("forgotInfo");
+      if (info) { info.textContent = ""; info.classList.remove("show"); }
+      refreshAuthModeUI();
+      if (name === "login") el("loginEmail")?.focus();
+      else if (name === "register") el("regEmail")?.focus();
+      else if (name === "forgot") el("forgotEmail")?.focus();
+    }
+
+    el("tabLogin")?.addEventListener("click", () => switchAuthPanel("login"));
+    el("tabRegister")?.addEventListener("click", () => switchAuthPanel("register"));
+    el("forgotLink")?.addEventListener("click", () => switchAuthPanel("forgot"));
+    el("forgotBack")?.addEventListener("click", () => switchAuthPanel("login"));
+
+    function closeDeleteConfirm() {
+      pendingDeleteId = null;
+      el("deleteConfirmModal").hidden = true;
+    }
+    el("deleteConfirmCancel")?.addEventListener("click", closeDeleteConfirm);
+    el("deleteConfirmModal")?.addEventListener("click", (e) => {
+      if (e.target === el("deleteConfirmModal")) closeDeleteConfirm();
+    });
+    el("deleteConfirmOk")?.addEventListener("click", () => {
+      if (!pendingDeleteId) return;
+      const id = pendingDeleteId;
+      closeDeleteConfirm();
+      deleteCustomHolding(id);
+      renderCards();
+      renderSummary();
+    });
 
     function measureChrome() {
       const header = document.querySelector(".app-header");
@@ -3134,15 +3417,17 @@
       el("loginGate").hidden = false;
       const sync = el("syncBar");
       if (sync) sync.hidden = true;
-      el("loginError").classList.remove("show");
+      switchAuthPanel("login");
       el("loginPass").value = "";
-      const u = el("loginUser");
-      if (!u.value) u.focus();
-      else el("loginPass").focus();
+      refreshAuthModeUI();
+      const u = el("loginEmail");
+      if (u && !u.value) u.focus();
+      else el("loginPass")?.focus();
     }
 
     function logout() {
-      setLoggedIn(false);
+      if (window.PortfolioAuth) PortfolioAuth.signOut();
+      else setLoggedIn(false);
       if (refreshTimer) clearTimeout(refreshTimer);
       if (countdownTimer) clearInterval(countdownTimer);
       if (marketHoursTimer) clearInterval(marketHoursTimer);
@@ -3150,18 +3435,64 @@
       showLogin();
     }
 
-    el("loginForm").addEventListener("submit", (e) => {
+    el("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const user = el("loginUser").value.trim();
+      const email = el("loginEmail").value.trim();
       const pass = el("loginPass").value;
-      if (user === AUTH_USER && pass === AUTH_PASS) {
-        setLoggedIn(true);
-        el("loginError").classList.remove("show");
+      showAuthError(el("loginError"), "");
+      setAuthBusy(el("loginForm"), true, "登录");
+      try {
+        await PortfolioAuth.signIn(email, pass);
         showApp();
-      } else {
-        el("loginError").classList.add("show");
+      } catch (err) {
+        showAuthError(el("loginError"), err.message || "登录失败");
         el("loginPass").focus();
         el("loginPass").select();
+      } finally {
+        setAuthBusy(el("loginForm"), false, "登录");
+      }
+    });
+
+    el("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      showAuthError(el("registerError"), "");
+      setAuthBusy(el("registerForm"), true, "创建账号");
+      try {
+        await PortfolioAuth.signUp(
+          el("regEmail").value,
+          el("regPass").value,
+          el("regPass2").value
+        );
+      } catch (err) {
+        showAuthError(el("registerError"), err.message || "注册失败");
+      } finally {
+        setAuthBusy(el("registerForm"), false, "创建账号");
+      }
+    });
+
+    el("forgotForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      showAuthError(el("forgotError"), "");
+      const info = el("forgotInfo");
+      if (info) { info.textContent = ""; info.classList.remove("show"); }
+      setAuthBusy(el("forgotForm"), true, "发送重置邮件");
+      try {
+        await PortfolioAuth.resetPassword(el("forgotEmail").value);
+      } catch (err) {
+        // Stub rejects with guidance — show as info/error
+        const msg = err.message || "暂不可用";
+        if (/即将|未接入|联系/.test(msg)) {
+          if (info) {
+            info.textContent = msg;
+            info.classList.add("show");
+          } else {
+            showAuthError(el("forgotError"), msg);
+          }
+        } else {
+          showAuthError(el("forgotError"), msg);
+        }
+      } finally {
+        setAuthBusy(el("forgotForm"), false, "发送重置邮件");
       }
     });
 

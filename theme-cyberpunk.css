@@ -94,3 +94,60 @@ body{background-attachment:scroll!important;}
   padding-left: max(14px, env(safe-area-inset-left, 0px));
   padding-right: max(14px, env(safe-area-inset-right, 0px));
 }
+
+/* —— Auth gate (login / register / forgot) —— */
+.login-gate{
+  background:
+    radial-gradient(900px 480px at 8% -8%,rgba(255,43,214,.28),transparent 50%),
+    radial-gradient(700px 400px at 95% 0%,rgba(0,240,255,.22),transparent 45%),
+    linear-gradient(rgba(0,240,255,.04) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(90deg,rgba(255,43,214,.04) 1px,transparent 1px) 0 0/28px 28px,
+    var(--bg)!important;
+}
+.auth-card,.login-card{
+  background:linear-gradient(160deg,rgba(32,30,92,.96),rgba(14,16,48,.96))!important;
+  border:1px solid rgba(0,240,255,.4)!important;
+  box-shadow:0 0 0 1px rgba(255,43,214,.2),0 16px 40px rgba(0,0,0,.5)!important;
+}
+.auth-brand h1{
+  font-family:"Orbitron","Noto Sans SC",sans-serif;
+  background:linear-gradient(90deg,#ff2bd6,#00f0ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 6px rgba(255,43,214,.55));
+}
+.auth-tabs{border-color:rgba(255,43,214,.35)!important;background:rgba(8,10,32,.7)!important;}
+.auth-tabs button.active{
+  background:linear-gradient(90deg,#ff2bd6,#7a3cff)!important;
+  color:#fff!important;
+  box-shadow:0 0 14px rgba(255,43,214,.55)!important;
+}
+.login-field input:focus{
+  border-color:#00f0ff!important;
+  box-shadow:0 0 0 3px rgba(0,240,255,.18),0 0 12px rgba(0,240,255,.25)!important;
+}
+.auth-card button[type="submit"],.login-card button[type="submit"]{
+  background:linear-gradient(90deg,#ff2bd6,#00c8ff)!important;
+  border:0!important;
+  box-shadow:0 0 16px rgba(255,43,214,.4);
+}
+.auth-links button{color:#00f0ff!important;}
+.auth-mode-pill.cloud{
+  color:#00f0ff!important;
+  border-color:rgba(0,240,255,.55)!important;
+  box-shadow:0 0 10px rgba(0,240,255,.35);
+}
+.confirm-card{
+  background:linear-gradient(160deg,rgba(32,30,92,.96),rgba(14,16,48,.96))!important;
+  border:1px solid rgba(255,61,110,.45)!important;
+  box-shadow:0 0 20px rgba(255,61,110,.25)!important;
+}
+.confirm-actions button.danger{
+  background:linear-gradient(90deg,rgba(255,61,110,.35),rgba(255,43,214,.25))!important;
+  border-color:#ff3d6e!important;
+  color:#fff!important;
+  box-shadow:0 0 12px rgba(255,61,110,.4);
+}
+.holding-modal-card{
+  border-color:rgba(0,240,255,.35)!important;
+  box-shadow:0 0 0 1px rgba(255,43,214,.18),0 16px 40px rgba(0,0,0,.5)!important;
+}

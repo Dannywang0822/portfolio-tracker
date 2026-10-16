@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .venv/
+
+# Local Firebase config (real keys — never commit)
+firebase-config.js
