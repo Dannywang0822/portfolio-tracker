@@ -1071,6 +1071,8 @@
       min-height: 44px;
       font-size: 0.85rem;
     }
+    /* Auth gate currently off — keep chrome free of login/logout */
+    button#logoutBtn[hidden] { display: none !important; }
     .holding-modal {
       position: fixed; inset: 0; z-index: 200;
       display: flex; align-items: flex-end; justify-content: center;
@@ -1406,7 +1408,7 @@
 </head>
 <body>
   <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
-  <div class="login-gate" id="loginGate">
+  <div class="login-gate" id="loginGate" hidden aria-hidden="true">
     <div class="login-card auth-card">
       <div class="auth-brand">
         <h1>持仓跟踪</h1>
@@ -1456,7 +1458,7 @@
     </div>
   </div>
 
-  <div class="wrap" id="appRoot" hidden>
+  <div class="wrap" id="appRoot">
     <header class="app-header">
       <div class="brand-row">
         <div class="brand">
@@ -1466,7 +1468,7 @@
         <div class="toolbar-actions">
           <button type="button" id="refreshBtn">刷新</button>
           <button type="button" id="addHoldingBtn">＋新增</button>
-          <button type="button" id="logoutBtn" title="退出登录">退出</button>
+          <button type="button" id="logoutBtn" title="退出登录" hidden>退出</button>
         </div>
       </div>
     </header>
@@ -1681,10 +1683,14 @@
     </div>
   </div>
 
+  <!-- Firebase SDK disabled while AUTH_GATE_ENABLED=false in auth.js (gstatic often blocked in CN).
+       To restore login/cloud sync: set AUTH_GATE_ENABLED=true and uncomment the three gstatic + firebase-config lines. -->
+  <!--
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
+  -->
   <script src="./auth.js"></script>
   <script src="./market-hours.js"></script>
   <script>
@@ -3458,7 +3464,7 @@
         pendingDeleteId = id;
         const acct = accountLabel(h.account);
         el("deleteConfirmText").textContent =
-          `将永久删除「${h.name}」· ${acct} · ${fmtNum(h.shares, 0)} 股。此操作不可撤销，删除后不再计入汇总；登录设备会实时同步。`;
+          `将永久删除「${h.name}」· ${acct} · ${fmtNum(h.shares, 0)} 股。此操作不可撤销，删除后不再计入汇总；本机立即生效。`;
         el("deleteConfirmModal").hidden = false;
       }
     });
@@ -3726,6 +3732,13 @@
     }
 
     async function bootApp() {
+      /* AUTH_GATE_ENABLED=false: skip Firebase / login UI; open holdings from localStorage + HOLDINGS. */
+      const gateOn = window.PortfolioAuth && PortfolioAuth.isAuthGateEnabled && PortfolioAuth.isAuthGateEnabled();
+      if (!gateOn) {
+        try { el("logoutBtn").hidden = true; } catch (e) { /* ignore */ }
+        showApp();
+        return;
+      }
       refreshAuthModeUI();
       /* Paint login immediately — never leave both gate + appRoot hidden (iOS blank screen). */
       if (!isLoggedIn()) showLogin();

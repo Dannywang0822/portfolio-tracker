@@ -1,13 +1,18 @@
 /**
  * Portfolio Auth + Firestore holdings sync (Firebase Email/Password).
  *
+ * AUTH_GATE_ENABLED=false: no login UI; app uses localStorage + built-in HOLDINGS.
+ * Firebase code stays dormant until the flag is flipped back and gstatic scripts restored.
+ *
  * Config via window.__FIREBASE_CONFIG__ (see firebase-config.js).
- * When cloud config is present, local danny/123 gate is disabled.
  * Holdings path: users/{uid}/holdings/{holdingId}
  * Same id as a built-in row = override; deleted:true = hide built-in across devices.
  */
 (function (global) {
   "use strict";
+
+  /** Set true to restore Firebase login gate + cloud sync (also re-enable gstatic scripts in index.html). */
+  var AUTH_GATE_ENABLED = false;
 
   var LOCAL_USER = "danny";
   var LOCAL_PASS = "123";
@@ -30,7 +35,12 @@
     return global.__FIREBASE_CONFIG__ || null;
   }
 
+  function isAuthGateEnabled() {
+    return AUTH_GATE_ENABLED === true;
+  }
+
   function isCloudReady() {
+    if (!isAuthGateEnabled()) return false;
     var c = config();
     return !!(
       c &&
@@ -90,6 +100,8 @@
   }
 
   function isLoggedIn() {
+    /* Gate off: always treat as logged in so app opens on localStorage holdings. */
+    if (!isAuthGateEnabled()) return true;
     if (isCloudReady()) {
       /* Cloud mode: only a live Firebase user counts — never trust stale localStorage alone. */
       return !!_currentUser;
@@ -292,7 +304,7 @@
   }
 
   function whenAuthReady(timeoutMs) {
-    if (!isCloudReady()) return Promise.resolve(null);
+    if (!isAuthGateEnabled() || !isCloudReady()) return Promise.resolve(null);
     if (!firebaseAvailable()) {
       clearLegacyLocalAuth();
       return Promise.resolve(null);
@@ -429,13 +441,14 @@
   }
 
   function boot() {
-    if (!isCloudReady() || !firebaseAvailable()) return;
+    if (!isAuthGateEnabled() || !isCloudReady() || !firebaseAvailable()) return;
     try { whenAuthReady(); } catch (e) {
       console.warn("[PortfolioAuth] boot", e);
     }
   }
 
   global.PortfolioAuth = {
+    isAuthGateEnabled: isAuthGateEnabled,
     isCloudReady: isCloudReady,
     modeLabel: modeLabel,
     isLoggedIn: isLoggedIn,

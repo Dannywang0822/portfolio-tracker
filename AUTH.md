@@ -1,5 +1,11 @@
 # 认证与云端同步（Firebase）
 
+> **当前状态（2026-10-16）：登录门控已关闭**（`auth.js` 中 `AUTH_GATE_ENABLED=false`）。
+> 页面直接进入持仓；数据以本机 `localStorage` + 内置 `HOLDINGS` 为主。
+> gstatic Firebase SDK 脚本已从 `index.html` 注释掉，避免国内网络卡住。
+> 云端同步暂停；若要恢复：把 `AUTH_GATE_ENABLED` 设为 `true`，并取消注释 `index.html` 里的 gstatic + `firebase-config.js`。
+> 公开注册保持关闭。
+
 后端：**Firebase Authentication（Email/Password）+ Firestore holdings**。
 
 ## 项目
