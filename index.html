@@ -1397,18 +1397,13 @@
     <div class="login-card auth-card">
       <div class="auth-brand">
         <h1>持仓跟踪</h1>
-        <p class="login-sub" id="loginSub">邮箱登录 · 持仓多端实时同步</p>
+        <p class="login-sub" id="loginSub">授权账号登录 · 持仓多端实时同步</p>
       </div>
-      <div class="auth-tabs" role="tablist" aria-label="登录或注册">
-        <button type="button" role="tab" id="tabLogin" data-auth-tab="login" class="active" aria-selected="true">登录</button>
-        <button type="button" role="tab" id="tabRegister" data-auth-tab="register" aria-selected="false">注册</button>
-      </div>
-
       <div class="auth-panel" id="panelLogin" data-auth-panel="login">
         <form id="loginForm" autocomplete="on">
           <div class="login-field">
             <label for="loginEmail">邮箱</label>
-            <input id="loginEmail" name="email" type="text" inputmode="email" autocomplete="username" required autofocus placeholder="you@example.com" />
+            <input id="loginEmail" name="email" type="email" inputmode="email" autocomplete="username" required autofocus value="oppodanny@gmail.com" placeholder="oppodanny@gmail.com" />
           </div>
           <div class="login-field">
             <label for="loginPass">密码</label>
@@ -1425,38 +1420,13 @@
         </form>
       </div>
 
-      <div class="auth-panel" id="panelRegister" data-auth-panel="register" hidden>
-        <form id="registerForm" autocomplete="on">
-          <div class="login-field">
-            <label for="regEmail">邮箱</label>
-            <input id="regEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
-          </div>
-          <div class="login-field">
-            <label for="regPass">密码（至少 6 位）</label>
-            <div class="pw-wrap">
-              <input id="regPass" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
-              <button type="button" class="pw-toggle" id="regPassToggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
-            </div>
-          </div>
-          <div class="login-field">
-            <label for="regPass2">确认密码</label>
-            <div class="pw-wrap">
-              <input id="regPass2" name="password2" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
-              <button type="button" class="pw-toggle" id="regPass2Toggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
-            </div>
-          </div>
-          <p class="login-error" id="registerError" role="alert"></p>
-          <button type="submit" id="registerSubmit">创建账号</button>
-        </form>
-      </div>
-
       <div class="auth-panel" id="panelForgot" data-auth-panel="forgot" hidden>
         <button type="button" class="auth-back" id="forgotBack">← 返回登录</button>
         <p class="auth-panel-title">重置密码</p>
         <form id="forgotForm" autocomplete="on">
           <div class="login-field">
-            <label for="forgotEmail">注册邮箱</label>
-            <input id="forgotEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            <label for="forgotEmail">授权邮箱</label>
+            <input id="forgotEmail" name="email" type="email" autocomplete="email" required value="oppodanny@gmail.com" placeholder="oppodanny@gmail.com" />
           </div>
           <p class="login-error" id="forgotError" role="alert"></p>
           <p class="auth-msg info" id="forgotInfo" role="status"></p>
@@ -1465,7 +1435,7 @@
       </div>
 
       <p class="login-note auth-note" id="authModeNote">
-        过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。
+        仅授权账号可登录 · 已关闭公开注册
       </p>
       <div style="text-align:center">
         <span class="auth-mode-pill" id="authModePill">LOCAL</span>
@@ -3404,50 +3374,39 @@
       }
       if (note) {
         note.textContent = cloud
-          ? "Firebase 已接通 · 请用邮箱注册/登录（推荐 oppodanny@gmail.com）· 持仓实时同步"
+          ? "Firebase 已接通 · 仅授权账号可登录 · 已关闭公开注册 · 持仓实时同步"
           : "过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。";
       }
       const sub = el("loginSub");
       if (sub) {
         sub.textContent = cloud
-          ? "邮箱登录后，持仓会实时同步到各设备"
+          ? "授权账号登录后，持仓会实时同步到各设备"
           : "邮箱登录后多端同步持仓（Firebase 接入中）";
       }
     }
 
     function switchAuthPanel(name) {
-      const panels = ["login", "register", "forgot"];
+      const panels = ["login", "forgot"];
       panels.forEach((p) => {
         const node = document.querySelector(`[data-auth-panel="${p}"]`);
         if (node) node.hidden = p !== name;
       });
-      const tabLogin = el("tabLogin");
-      const tabReg = el("tabRegister");
-      if (tabLogin && tabReg) {
-        const onLogin = name === "login" || name === "forgot";
-        tabLogin.classList.toggle("active", name === "login");
-        tabReg.classList.toggle("active", name === "register");
-        tabLogin.setAttribute("aria-selected", name === "login" ? "true" : "false");
-        tabReg.setAttribute("aria-selected", name === "register" ? "true" : "false");
-        // hide tabs visual emphasis on forgot — still show tabs
-        if (name === "forgot") {
-          tabLogin.classList.remove("active");
-          tabReg.classList.remove("active");
-        }
-      }
       showAuthError(el("loginError"), "");
-      showAuthError(el("registerError"), "");
       showAuthError(el("forgotError"), "");
       const info = el("forgotInfo");
       if (info) { info.textContent = ""; info.classList.remove("show"); }
       refreshAuthModeUI();
-      if (name === "login") el("loginEmail")?.focus();
-      else if (name === "register") el("regEmail")?.focus();
-      else if (name === "forgot") el("forgotEmail")?.focus();
+      if (name === "login") {
+        const u = el("loginEmail");
+        if (u && !u.value) u.value = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+        el("loginPass")?.focus() || u?.focus();
+      } else if (name === "forgot") {
+        const f = el("forgotEmail");
+        if (f && !f.value) f.value = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+        f?.focus();
+      }
     }
 
-    el("tabLogin")?.addEventListener("click", () => switchAuthPanel("login"));
-    el("tabRegister")?.addEventListener("click", () => switchAuthPanel("register"));
     el("forgotLink")?.addEventListener("click", () => switchAuthPanel("forgot"));
     el("forgotBack")?.addEventListener("click", () => switchAuthPanel("login"));
 
@@ -3547,6 +3506,11 @@
       const email = el("loginEmail").value.trim();
       const pass = el("loginPass").value;
       showAuthError(el("loginError"), "");
+      const allowed = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+      if (email.toLowerCase() !== allowed.toLowerCase()) {
+        showAuthError(el("loginError"), "仅允许授权账号登录（" + allowed + "）");
+        return;
+      }
       setAuthBusy(el("loginForm"), true, "登录");
       try {
         await PortfolioAuth.signIn(email, pass);
@@ -3560,32 +3524,20 @@
       }
     });
 
-    el("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showAuthError(el("registerError"), "");
-      setAuthBusy(el("registerForm"), true, "创建账号");
-      try {
-        await PortfolioAuth.signUp(
-          el("regEmail").value,
-          el("regPass").value,
-          el("regPass2").value
-        );
-        showApp();
-      } catch (err) {
-        showAuthError(el("registerError"), err.message || "注册失败");
-      } finally {
-        setAuthBusy(el("registerForm"), false, "创建账号");
-      }
-    });
-
     el("forgotForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       showAuthError(el("forgotError"), "");
       const info = el("forgotInfo");
       if (info) { info.textContent = ""; info.classList.remove("show"); }
+      const allowed = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+      const fem = el("forgotEmail").value.trim();
+      if (fem.toLowerCase() !== allowed.toLowerCase()) {
+        showAuthError(el("forgotError"), "仅可向授权邮箱发送重置邮件（" + allowed + "）");
+        return;
+      }
       setAuthBusy(el("forgotForm"), true, "发送重置邮件");
       try {
-        await PortfolioAuth.resetPassword(el("forgotEmail").value);
+        await PortfolioAuth.resetPassword(fem);
         if (info) {
           info.textContent = "重置邮件已发送，请查收邮箱（含垃圾箱）";
           info.classList.add("show");

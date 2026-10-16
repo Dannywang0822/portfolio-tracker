@@ -10,6 +10,8 @@
 
   var LOCAL_USER = "danny";
   var LOCAL_PASS = "123";
+  /** Sole allowed cloud login email (UI + client guard). Password never stored here. */
+  var ALLOWED_EMAIL = "oppodanny@gmail.com";
   var AUTH_KEY = "portfolio-tracker-logged-in";
   var AUTH_EMAIL_KEY = "portfolio-tracker-auth-email";
   var CUSTOM_KEY = "portfolio-custom-holdings";
@@ -299,6 +301,19 @@
     return _authReady;
   }
 
+
+  function normalizeEmail(email) {
+    return String(email || "").trim().toLowerCase();
+  }
+
+  function assertAllowedEmail(email) {
+    var em = normalizeEmail(email);
+    if (em !== ALLOWED_EMAIL) {
+      return Promise.reject(new Error("仅允许授权账号登录（" + ALLOWED_EMAIL + "）"));
+    }
+    return Promise.resolve(em);
+  }
+
   function signIn(emailOrUser, password) {
     var id = String(emailOrUser || "").trim();
     var pass = String(password || "");
@@ -306,19 +321,21 @@
       return Promise.reject(new Error("请填写邮箱和密码"));
     }
     if (isCloudReady()) {
-      try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
-      return _auth
-        .signInWithEmailAndPassword(id, pass)
+      return assertAllowedEmail(id).then(function (em) {
+        try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
+        return _auth
+          .signInWithEmailAndPassword(em, pass)
         .then(function (cred) {
           _currentUser = cred.user;
-          setLoggedIn(true, cred.user.email || id);
+          setLoggedIn(true, cred.user.email || em);
           return startHoldingsSync(cred.user.uid).then(function () {
-            return { mode: "cloud", email: cred.user.email || id, uid: cred.user.uid };
+            return { mode: "cloud", email: cred.user.email || em, uid: cred.user.uid };
           });
         })
         .catch(function (err) {
           return Promise.reject(new Error(mapAuthError(err)));
         });
+      });
     }
     var lower = id.toLowerCase();
     var localOk =
@@ -334,56 +351,29 @@
     return Promise.resolve({ mode: "local", email: id });
   }
 
-  function signUp(email, password, password2) {
-    var em = String(email || "").trim();
-    var p1 = String(password || "");
-    var p2 = String(password2 || "");
-    if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
-      return Promise.reject(new Error("请填写有效邮箱"));
-    }
-    if (p1.length < 6) {
-      return Promise.reject(new Error("密码至少 6 位"));
-    }
-    if (p1 !== p2) {
-      return Promise.reject(new Error("两次密码不一致"));
-    }
-    if (!isCloudReady()) {
-      return Promise.reject(
-        new Error("云端邮箱注册即将上线（Firebase）。当前请用本地门禁登录：danny / 123")
-      );
-    }
-    try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
-    return _auth
-      .createUserWithEmailAndPassword(em, p1)
-      .then(function (cred) {
-        _currentUser = cred.user;
-        setLoggedIn(true, cred.user.email || em);
-        return startHoldingsSync(cred.user.uid).then(function () {
-          return { mode: "cloud", email: cred.user.email || em, uid: cred.user.uid };
-        });
-      })
-      .catch(function (err) {
-        return Promise.reject(new Error(mapAuthError(err)));
-      });
+  function signUp() {
+    return Promise.reject(new Error("本看板已关闭公开注册，仅授权账号可登录"));
   }
 
   function resetPassword(email) {
-    var em = String(email || "").trim();
-    if (!em) {
-      return Promise.reject(new Error("请填写注册邮箱"));
+    var raw = String(email || "").trim();
+    if (!raw) {
+      return Promise.reject(new Error("请填写授权邮箱"));
     }
-    if (!isCloudReady()) {
-      return Promise.reject(
-        new Error("忘记密码将走邮箱重置；云端未接入前请联系看板管理员")
-      );
-    }
-    try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
-    return _auth
-      .sendPasswordResetEmail(em)
-      .then(function () { return { ok: true, email: em }; })
-      .catch(function (err) {
-        return Promise.reject(new Error(mapAuthError(err)));
-      });
+    return assertAllowedEmail(raw).then(function (em) {
+      if (!isCloudReady()) {
+        return Promise.reject(
+          new Error("忘记密码将走邮箱重置；云端未接入前请联系看板管理员")
+        );
+      }
+      try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
+      return _auth
+        .sendPasswordResetEmail(em)
+        .then(function () { return { ok: true, email: em }; })
+        .catch(function (err) {
+          return Promise.reject(new Error(mapAuthError(err)));
+        });
+    });
   }
 
   function signOut() {
@@ -414,6 +404,7 @@
     setLoggedIn: setLoggedIn,
     currentEmail: currentEmail,
     currentUid: currentUid,
+    allowedEmail: function () { return ALLOWED_EMAIL; },
     signIn: signIn,
     signUp: signUp,
     resetPassword: resetPassword,
