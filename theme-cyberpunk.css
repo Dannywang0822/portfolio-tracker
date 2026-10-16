@@ -131,6 +131,16 @@ body{background-attachment:scroll!important;}
   box-shadow:0 0 16px rgba(255,43,214,.4);
 }
 .auth-links button{color:#00f0ff!important;}
+.pw-toggle{color:rgba(0,240,255,.65)!important;}
+.pw-toggle:hover,.pw-toggle:focus-visible{
+  color:#00f0ff!important;
+  background:rgba(0,240,255,.1)!important;
+  box-shadow:0 0 10px rgba(0,240,255,.25);
+}
+.pw-toggle[aria-pressed="true"]{
+  color:#ff2bd6!important;
+  text-shadow:0 0 8px rgba(255,43,214,.55);
+}
 .auth-mode-pill.cloud{
   color:#00f0ff!important;
   border-color:rgba(0,240,255,.55)!important;

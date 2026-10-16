@@ -717,6 +717,56 @@
     .login-field input:disabled {
       opacity: 0.65;
     }
+    .pw-wrap {
+      position: relative;
+      display: block;
+    }
+    .pw-wrap input {
+      padding-right: 48px;
+    }
+    .pw-toggle {
+      appearance: none;
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      padding: 0;
+      transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .pw-toggle:hover,
+    .pw-toggle:focus-visible {
+      color: var(--accent);
+      background: rgba(0, 240, 255, 0.08);
+      outline: none;
+    }
+    .pw-toggle:focus-visible {
+      box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.35);
+    }
+    .pw-toggle[aria-pressed="true"] {
+      color: #00f0ff;
+    }
+    .pw-toggle svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      pointer-events: none;
+    }
+    .pw-toggle .pw-eye-off { display: none; }
+    .pw-toggle[aria-pressed="true"] .pw-eye { display: none; }
+    .pw-toggle[aria-pressed="true"] .pw-eye-off { display: block; }
     .login-error, .auth-msg {
       display: none;
       font-size: 0.8rem;
@@ -1362,7 +1412,10 @@
           </div>
           <div class="login-field">
             <label for="loginPass">密码</label>
-            <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+            <div class="pw-wrap">
+              <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+              <button type="button" class="pw-toggle" id="loginPassToggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
           </div>
           <div class="auth-links">
             <button type="button" id="forgotLink">忘记密码？</button>
@@ -1380,11 +1433,17 @@
           </div>
           <div class="login-field">
             <label for="regPass">密码（至少 6 位）</label>
-            <input id="regPass" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+            <div class="pw-wrap">
+              <input id="regPass" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+              <button type="button" class="pw-toggle" id="regPassToggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
           </div>
           <div class="login-field">
             <label for="regPass2">确认密码</label>
-            <input id="regPass2" name="password2" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+            <div class="pw-wrap">
+              <input id="regPass2" name="password2" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" />
+              <button type="button" class="pw-toggle" id="regPass2Toggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
           </div>
           <p class="login-error" id="registerError" role="alert"></p>
           <button type="submit" id="registerSubmit">创建账号</button>
@@ -3392,6 +3451,30 @@
     el("forgotLink")?.addEventListener("click", () => switchAuthPanel("forgot"));
     el("forgotBack")?.addEventListener("click", () => switchAuthPanel("login"));
 
+    function resetPasswordVisibility() {
+      document.querySelectorAll("#loginGate .pw-wrap input[type='text']").forEach((inp) => {
+        inp.type = "password";
+      });
+      document.querySelectorAll("#loginGate .pw-toggle").forEach((btn) => {
+        btn.setAttribute("aria-pressed", "false");
+        btn.setAttribute("aria-label", "显示密码");
+        btn.title = "显示密码";
+      });
+    }
+
+    document.querySelectorAll("#loginGate .pw-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const wrap = btn.closest(".pw-wrap");
+        const input = wrap && wrap.querySelector("input");
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.setAttribute("aria-pressed", show ? "true" : "false");
+        btn.setAttribute("aria-label", show ? "隐藏密码" : "显示密码");
+        btn.title = show ? "隐藏密码" : "显示密码";
+      });
+    });
+
     function closeDeleteConfirm() {
       pendingDeleteId = null;
       el("deleteConfirmModal").hidden = true;
@@ -3442,6 +3525,7 @@
       if (sync) sync.hidden = true;
       switchAuthPanel("login");
       el("loginPass").value = "";
+      resetPasswordVisibility();
       refreshAuthModeUI();
       const u = el("loginEmail");
       if (u && !u.value) u.focus();

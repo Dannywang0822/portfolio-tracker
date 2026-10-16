@@ -45,4 +45,4 @@ Firebase Console → Authentication → Settings → Authorized domains，确保
 - `auth.js` — Auth + Firestore sync
 - `firestore.rules` / `firebase.json`
 - `index.html` — 门禁 UI + CRUD
-- `sw.js` — shell v29
+- `sw.js` — shell v31
