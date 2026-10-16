@@ -1347,7 +1347,7 @@
     <div class="login-card auth-card">
       <div class="auth-brand">
         <h1>持仓跟踪</h1>
-        <p class="login-sub">邮箱登录后多端同步持仓（Firebase 接入中）</p>
+        <p class="login-sub" id="loginSub">邮箱登录 · 持仓多端实时同步</p>
       </div>
       <div class="auth-tabs" role="tablist" aria-label="登录或注册">
         <button type="button" role="tab" id="tabLogin" data-auth-tab="login" class="active" aria-selected="true">登录</button>
@@ -3347,6 +3347,12 @@
         note.textContent = cloud
           ? "Firebase 已接通 · 请用邮箱注册/登录（推荐 oppodanny@gmail.com）· 持仓实时同步"
           : "过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。";
+      }
+      const sub = el("loginSub");
+      if (sub) {
+        sub.textContent = cloud
+          ? "邮箱登录后，持仓会实时同步到各设备"
+          : "邮箱登录后多端同步持仓（Firebase 接入中）";
       }
     }
 
