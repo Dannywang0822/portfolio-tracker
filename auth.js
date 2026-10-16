@@ -4,6 +4,7 @@
  * Config via window.__FIREBASE_CONFIG__ (see firebase-config.js).
  * When cloud config is present, local danny/123 gate is disabled.
  * Holdings path: users/{uid}/holdings/{holdingId}
+ * Same id as a built-in row = override; deleted:true = hide built-in across devices.
  */
 (function (global) {
   "use strict";
@@ -119,7 +120,7 @@
   }
 
   function holdingToDoc(h) {
-    return {
+    var doc = {
       account: String(h.account || "futu"),
       yahoo: String(h.yahoo || h.ticker || ""),
       name: String(h.name || ""),
@@ -128,6 +129,9 @@
       currency: String(h.currency || "USD"),
       updatedAt: global.firebase.firestore.FieldValue.serverTimestamp(),
     };
+    if (h && h.deleted) doc.deleted = true;
+    else doc.deleted = false;
+    return doc;
   }
 
   function docToHolding(id, data) {
@@ -142,6 +146,7 @@
       currency: String(data.currency || "USD"),
       account: String(data.account || "futu"),
       custom: true,
+      deleted: !!data.deleted,
     };
   }
 
@@ -224,7 +229,7 @@
                 CUSTOM_KEY,
                 JSON.stringify(
                   _cloudHoldings.map(function (h) {
-                    return {
+                    var row = {
                       id: h.id,
                       name: h.name,
                       yahoo: h.yahoo,
@@ -234,6 +239,8 @@
                       currency: h.currency,
                       account: h.account,
                     };
+                    if (h.deleted) row.deleted = true;
+                    return row;
                   })
                 )
               );

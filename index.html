@@ -2106,12 +2106,31 @@
         h = h && typeof h === "object" ? h : {};
         const issues = [];
         let id = h.id ? String(h.id) : "";
-        const origId = h.origId || (id && (builtinIds.has(id) || seen.has(id)) ? id : undefined);
-        if (!id || builtinIds.has(id) || seen.has(id)) {
+        // 允许 id 与内置相同 = 覆盖行；仅缺 id 或列表内重复时才改写
+        if (!id || seen.has(id)) {
           id = "custom-fix-" + i + "-" + Math.random().toString(36).slice(2, 7);
           changed = true;
         }
         seen.add(id);
+        const isTombstone = !!h.deleted;
+        if (isTombstone) {
+          return {
+            id,
+            name: String(h.name || ""),
+            ticker: String(h.yahoo || h.ticker || ""),
+            yahoo: String(h.yahoo || h.ticker || ""),
+            shares: 0,
+            avgCost: 0,
+            currency: "USD",
+            storedCurrency: null,
+            account: normalizeAccount(h.account),
+            market: "us",
+            custom: true,
+            deleted: true,
+            override: builtinIds.has(id),
+            issues: [],
+          };
+        }
         const code = String(h.yahoo || h.ticker || "").trim();
         const stored = ["HKD", "CNY", "USD"].includes(h.currency) ? h.currency : null;
         const need = inferCurrencyFromCode(code);
@@ -2134,7 +2153,8 @@
           account: normalizeAccount(h.account),
           market: MARKET_FROM_CURRENCY[currency] || "us",
           custom: true,
-          origId,
+          override: builtinIds.has(id),
+          deleted: false,
           issues,
         };
       });
@@ -2153,18 +2173,76 @@
       try {
         pushBackup(localStorage.getItem(CUSTOM_KEY));
         const clean = list.map((h) => {
-          const { issues, storedCurrency, recovered, ...rest } = h;
+          const { issues, storedCurrency, recovered, override, ...rest } = h;
+          if (h.deleted) {
+            return {
+              id: String(h.id),
+              deleted: true,
+              name: String(h.name || ""),
+              yahoo: String(h.yahoo || h.ticker || ""),
+              ticker: String(h.yahoo || h.ticker || ""),
+              shares: 0,
+              avgCost: 0,
+              currency: String(h.currency || "USD"),
+              account: normalizeAccount(h.account),
+            };
+          }
           // 保留用户原选币种（未选则不写），不悄悄改
           if (issues !== undefined) rest.currency = storedCurrency || undefined;
+          delete rest.deleted;
           return rest;
         });
         localStorage.setItem(CUSTOM_KEY, JSON.stringify(clean));
       } catch (e) { /* ignore */ }
     }
 
-    // 内置 + 手动拼接；同一 yahoo 不同 account 保留多行，绝不按代码/名称去重
+    // 内置 ∪ 云端覆盖 ∪ 纯手动；同 id 覆盖内置；deleted 墓碑跨端隐藏内置
     function allHoldings() {
-      return HOLDINGS.concat(loadCustomHoldings());
+      const customs = loadCustomHoldings();
+      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
+      const byId = new Map();
+      const tombstones = new Set(deletedIds());
+      for (const h of customs) {
+        if (!h || !h.id) continue;
+        if (h.deleted) {
+          tombstones.add(h.id);
+          continue;
+        }
+        byId.set(h.id, h);
+      }
+      const out = [];
+      for (const b of HOLDINGS) {
+        if (tombstones.has(b.id)) continue;
+        const o = byId.get(b.id);
+        if (o) {
+          const currency = o.currency || b.currency;
+          out.push({
+            ...b,
+            ...o,
+            id: b.id,
+            ticker: o.yahoo || o.ticker || b.ticker,
+            yahoo: o.yahoo || o.ticker || b.yahoo,
+            currency,
+            account: normalizeAccount(o.account || b.account),
+            market: MARKET_FROM_CURRENCY[currency] || b.market || "us",
+            custom: true,
+            override: true,
+          });
+        } else {
+          out.push({
+            ...b,
+            market: MARKET_FROM_CURRENCY[b.currency] || "us",
+            custom: false,
+            override: false,
+          });
+        }
+      }
+      for (const h of customs) {
+        if (!h || h.deleted || tombstones.has(h.id)) continue;
+        if (builtinIds.has(h.id)) continue;
+        out.push(h);
+      }
+      return out;
     }
 
     function genCustomId() {
@@ -2623,21 +2701,20 @@
         const mvText = noPx ? "—" : fmtMoney(mv, h.currency);
         const pnlText = loading ? "—" : (missing ? "N/A" : fmtMoney(pnl, h.currency));
         const pnlPctText = loading ? "—" : (missing ? "N/A" : fmtPct(pnlPct));
-        const customBadge = h.custom ? `<span class="badge custom-badge">手动</span>` : "";
+        const customBadge = h.custom && !h.override ? `<span class="badge custom-badge">手动</span>` : "";
+        const overrideBadge = h.override ? `<span class="badge custom-badge">已改</span>` : "";
         const hasIssue = h.issues && h.issues.length;
         const warnBadge = hasIssue ? `<span class="badge warn-badge">⚠ 待修正</span>` : "";
         const issueTag = hasIssue ? `<div class="issue-tag">⚠ ${escapeHtml(h.issues.join("；"))} · 点开后「编辑」</div>` : "";
         const needWatch =
-          h.custom && missing && !loading
+          missing && !loading
             ? `<button type="button" data-watchlist="${escapeHtml(h.yahoo)}">加入定时行情</button>`
             : "";
-        const actions = h.custom
-          ? `<div class="card-actions">
+        const actions = `<div class="card-actions">
               <button type="button" data-edit="${escapeHtml(h.id)}">编辑持仓</button>
               <button type="button" class="danger" data-delete="${escapeHtml(h.id)}">删除</button>
               ${needWatch}
-            </div>`
-          : "";
+            </div>`;
 
         return `
           <article class="card${isOpen}${hasIssue ? " has-issue" : ""}" data-id="${escapeHtml(h.id)}" tabindex="0" role="button" aria-expanded="${openIds.has(h.id) ? "true" : "false"}">
@@ -2648,6 +2725,7 @@
                 <span class="badge mkt-${escapeHtml(h.currency)}">${mkt}</span>
                 <span class="badge acct-${escapeHtml(h.account || "")}">${accountLabel(h.account)}</span>
                 ${customBadge}
+                ${overrideBadge}
                 ${warnBadge}
               </div>
               ${issueTag}
@@ -3168,7 +3246,7 @@
       if (editHolding) {
         el("holdingModalTitle").textContent = "编辑持仓";
         const sub = el("holdingModalSub");
-        if (sub) sub.textContent = "可随意改名称、代码、股数、成本、账户 · 同票不同券商请分行保存";
+        if (sub) sub.textContent = "可改名称、代码、股数、成本、账户 · 保存后云端实时同步 · 同票不同券商请分行";
         el("hmEditId").value = editHolding.id;
         el("hmName").value = editHolding.name;
         el("hmYahoo").value = editHolding.yahoo;
@@ -3195,16 +3273,23 @@
 
     function upsertCustomHolding(payload) {
       // 只按 id 更新；同 yahoo/名称但不同账户的行互不影响，禁止跨账户合并
-      const list = loadCustomHoldings();
-      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
-      // 手动仓不得占用内置 id，避免「永隆新劲刚」写穿平安内置行
-      if (payload.id && builtinIds.has(payload.id)) {
-        payload = { ...payload, id: genCustomId() };
-      }
+      // 内置 id 保留 = 覆盖行（跨端同步）；新增才 genCustomId
       if (!payload.id) payload = { ...payload, id: genCustomId() };
+      payload = { ...payload, deleted: false };
+      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
+      if (builtinIds.has(payload.id)) payload = { ...payload, override: true, custom: true };
+      let list = loadCustomHoldings().filter((h) => !(h.deleted && h.id === payload.id));
       const idx = list.findIndex((h) => h.id === payload.id);
       if (idx >= 0) list[idx] = payload;
       else list.push(payload);
+      // 若曾删除过该内置，复活时清掉本地墓碑
+      try {
+        const gone = deletedIds();
+        if (gone.has(payload.id)) {
+          gone.delete(payload.id);
+          localStorage.setItem(CUSTOM_DELETED_KEY, JSON.stringify([...gone]));
+        }
+      } catch (e) { /* ignore */ }
       saveCustomHoldings(list);
       if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.currentUid()) {
         PortfolioAuth.upsertHolding(payload).catch((err) => {
@@ -3216,7 +3301,24 @@
     }
 
     function deleteCustomHolding(id) {
-      const list = loadCustomHoldings().filter((h) => h.id !== id);
+      const builtinIds = new Set(HOLDINGS.map((b) => b.id));
+      const isBuiltin = builtinIds.has(id);
+      let list = loadCustomHoldings().filter((h) => h.id !== id);
+      // 内置行：写墓碑，其它设备 onSnapshot 后同样隐藏
+      if (isBuiltin) {
+        const prev = allHoldings().find((h) => h.id === id) || HOLDINGS.find((h) => h.id === id) || {};
+        list.push({
+          id,
+          deleted: true,
+          name: prev.name || "",
+          yahoo: prev.yahoo || prev.ticker || "",
+          ticker: prev.yahoo || prev.ticker || "",
+          shares: 0,
+          avgCost: 0,
+          currency: prev.currency || "USD",
+          account: normalizeAccount(prev.account),
+        });
+      }
       try {
         const gone = deletedIds();
         gone.add(id);
@@ -3225,7 +3327,19 @@
       saveCustomHoldings(list);
       delete lastGood[id];
       if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.currentUid()) {
-        PortfolioAuth.deleteHolding(id).catch((err) => {
+        const cloud = isBuiltin
+          ? PortfolioAuth.upsertHolding({
+              id,
+              deleted: true,
+              name: "",
+              yahoo: "",
+              shares: 0,
+              avgCost: 0,
+              currency: "USD",
+              account: "futu",
+            })
+          : PortfolioAuth.deleteHolding(id);
+        cloud.catch((err) => {
           console.warn("cloud delete failed", err);
         });
       }
@@ -3319,19 +3433,19 @@
       if (editBtn) {
         e.stopPropagation();
         const id = editBtn.getAttribute("data-edit");
-        const h = loadCustomHoldings().find((x) => x.id === id);
+        const h = allHoldings().find((x) => x.id === id);
         if (h) openHoldingModal(h);
         return;
       }
       if (delBtn) {
         e.stopPropagation();
         const id = delBtn.getAttribute("data-delete");
-        const h = loadCustomHoldings().find((x) => x.id === id);
+        const h = allHoldings().find((x) => x.id === id);
         if (!h) return;
         pendingDeleteId = id;
         const acct = accountLabel(h.account);
         el("deleteConfirmText").textContent =
-          `将永久删除「${h.name}」· ${acct} · ${fmtNum(h.shares, 0)} 股。此操作不可撤销，删除后不再计入汇总。`;
+          `将永久删除「${h.name}」· ${acct} · ${fmtNum(h.shares, 0)} 股。此操作不可撤销，删除后不再计入汇总；登录设备会实时同步。`;
         el("deleteConfirmModal").hidden = false;
       }
     });
