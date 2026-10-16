@@ -1639,6 +1639,10 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
   <script src="./auth.js"></script>
   <script src="./market-hours.js"></script>
   <script>
@@ -3146,7 +3150,7 @@
       } else {
         el("holdingModalTitle").textContent = "新增持仓";
         const sub = el("holdingModalSub");
-        if (sub) sub.textContent = "可随意新增 · 目前保存在本机，云端同步接入后多端一致";
+        if (sub) sub.textContent = "可随意新增 · 登录后实时同步到云端（多端一致）";
         el("hmEditId").value = "";
         form.reset();
         el("hmCurrency").value = "";
@@ -3168,10 +3172,18 @@
       if (payload.id && builtinIds.has(payload.id)) {
         payload = { ...payload, id: genCustomId() };
       }
+      if (!payload.id) payload = { ...payload, id: genCustomId() };
       const idx = list.findIndex((h) => h.id === payload.id);
       if (idx >= 0) list[idx] = payload;
       else list.push(payload);
       saveCustomHoldings(list);
+      if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.currentUid()) {
+        PortfolioAuth.upsertHolding(payload).catch((err) => {
+          console.warn("cloud upsert failed", err);
+          const sync = el("syncBar");
+          if (sync) sync.textContent = "云端保存失败：" + (err.message || "重试");
+        });
+      }
     }
 
     function deleteCustomHolding(id) {
@@ -3183,6 +3195,11 @@
       } catch (e) { /* ignore */ }
       saveCustomHoldings(list);
       delete lastGood[id];
+      if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.currentUid()) {
+        PortfolioAuth.deleteHolding(id).catch((err) => {
+          console.warn("cloud delete failed", err);
+        });
+      }
     }
 
     el("addHoldingBtn").addEventListener("click", () => openHoldingModal(null));
@@ -3328,7 +3345,7 @@
       }
       if (note) {
         note.textContent = cloud
-          ? "云端账号已配置（Firebase）· 邮箱注册登录后持仓将实时同步"
+          ? "Firebase 已接通 · 请用邮箱注册/登录（推荐 oppodanny@gmail.com）· 持仓实时同步"
           : "过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。";
       }
     }
@@ -3463,6 +3480,7 @@
           el("regPass").value,
           el("regPass2").value
         );
+        showApp();
       } catch (err) {
         showAuthError(el("registerError"), err.message || "注册失败");
       } finally {
@@ -3478,8 +3496,11 @@
       setAuthBusy(el("forgotForm"), true, "发送重置邮件");
       try {
         await PortfolioAuth.resetPassword(el("forgotEmail").value);
+        if (info) {
+          info.textContent = "重置邮件已发送，请查收邮箱（含垃圾箱）";
+          info.classList.add("show");
+        }
       } catch (err) {
-        // Stub rejects with guidance — show as info/error
         const msg = err.message || "暂不可用";
         if (/即将|未接入|联系/.test(msg)) {
           if (info) {
@@ -3527,11 +3548,27 @@
     window.addEventListener("resize", () => { measureChrome(); syncStickyPnl(); }, { passive: true });
 
 
-    if (isLoggedIn()) {
-      showApp();
-    } else {
-      showLogin();
+    if (window.PortfolioAuth && PortfolioAuth.onHoldingsChange) {
+      PortfolioAuth.onHoldingsChange(() => {
+        if (!isLoggedIn()) return;
+        renderCards();
+        renderSummary();
+      });
     }
+
+    async function bootApp() {
+      refreshAuthModeUI();
+      if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.whenAuthReady) {
+        try {
+          await PortfolioAuth.whenAuthReady();
+        } catch (e) {
+          console.warn("auth ready", e);
+        }
+      }
+      if (isLoggedIn()) showApp();
+      else showLogin();
+    }
+    bootApp();
   </script>
 </body>
 </html>

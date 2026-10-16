@@ -1,64 +1,48 @@
-# 认证与云端同步（Firebase · 分工说明）
+# 认证与云端同步（Firebase）
 
-后端定为 **Firebase Authentication（Email/Password）+ Firestore holdings**，不是 Supabase。
+后端：**Firebase Authentication（Email/Password）+ Firestore holdings**。
 
-## 设计师负责（本仓库已做）
+## 项目
 
-- 登录 / 邮箱注册 / 忘记密码 **UI**（PWA 内全屏门禁 overlay）
-- 加载态、错误态、赛博朋克视觉（`theme-cyberpunk.css` + 门禁样式）
-- `auth.js` stub：检测 `window.__FIREBASE_CONFIG__`；未配置时回退本地门禁
-- 持仓新增 / 编辑 / 删除弹窗文案与删除确认（本地 `localStorage` 仍可用）
-- **不**提交真实 `apiKey` / 私密配置；示例见 `firebase-config.example.js`
+| 项 | 值 |
+|----|----|
+| Project ID | `danny-portfolio-tracker` |
+| Auth | Email/Password（已开启） |
+| Firestore | `(default)` · `asia-east1` |
+| Web App | Portfolio Tracker |
+| 配置文件 | `firebase-config.js`（网页公开配置，靠 Rules 保护数据） |
 
-本地门禁（过渡）：用户名 `danny`，密码 `123`（邮箱字段也可用 `danny@…`）。
+## 安全规则
 
-## 管理员负责（待接）
+路径：`users/{uid}/holdings/{holdingId}` — 仅本人可读写（见 `firestore.rules`）。
 
-1. 在 Firebase Console 创建项目，开启 **Email/Password** 登录。
-2. 注入配置（二选一，**勿把真实密钥提交进 git**）：
-   - 构建/托管时写入：
-     ```js
-     window.__FIREBASE_CONFIG__ = {
-       apiKey: "…",
-       authDomain: "your-project.firebaseapp.com",
-       projectId: "your-project",
-       appId: "1:…:web:…",
-       // optional: storageBucket, messagingSenderId, measurementId
-     };
-     ```
-   - 或复制 `firebase-config.example.js` → `firebase-config.js`（已在 `.gitignore`），页面加载该脚本。
-3. 接入 Firebase JS SDK（`firebase/app` + `firebase/auth` + `firebase/firestore`）：
-   - Auth：`signInWithEmailAndPassword` / `createUserWithEmailAndPassword` / `sendPasswordResetEmail` / `signOut` / `onAuthStateChanged`
-   - 会话就绪后调用现有 `showApp()` / `logout()`
-4. Firestore `holdings` 集合建议字段：
+## 前端行为
 
-| field      | type   | notes |
-|------------|--------|-------|
-| userId     | string | `auth.uid`，Security Rules 按此过滤 |
-| account    | string | `futu` / `pingan` / `winglung` / `citic` |
-| yahoo      | string | Yahoo 代码，如 `300629.SZ` |
-| name       | string | 显示名 |
-| shares     | number | 股数 |
-| avgCost    | number | 成本均价（标的币种） |
-| currency   | string | `USD` / `HKD` / `CNY` |
-| updatedAt  | timestamp | optional |
+- 有 `window.__FIREBASE_CONFIG__` 时：**只用 Firebase 登录**，本地 `danny/123` 门禁关闭
+- 登录/注册后 `onSnapshot` 实时同步手动持仓
+- 首次登录会把本机 `portfolio-custom-holdings` 迁移到云端（每 uid 一次）
+- 内置持仓仍在 `index.html` 的 `HOLDINGS`；手动仓走 Firestore
 
-文档 id：可用自动 id；唯一性建议 Rules/复合：`userId + account + yahoo`（跨券商同票分行）。
+## 授权域名（需控制台确认）
 
-5. 前端 CRUD：登录后读写 Firestore；可先迁移 `localStorage` 的 `portfolio-custom-holdings`。
-6. 授权域名：Firebase Auth → Authorized domains 加入 `dannywang0822.github.io` 与本地预览 host。
+Firebase Console → Authentication → Settings → Authorized domains，确保有：
 
-## 开放问题（需管理员确认）
+- `dannywang0822.github.io`
+- `localhost`（本地预览）
 
-- **邮箱验证**：注册后是否必须 `sendEmailVerification` 才可读写 holdings？
-- **密码重置**邮件语言（中文）与发件显示名
-- 旧本地门禁下线时机（云端稳定后删 `danny/123`）
-- Firestore 是否用实时 `onSnapshot` 还是拉一次 + 手动刷新
+默认通常已含 `localhost` 与 `*.firebaseapp.com`；**GitHub Pages 域名需手动添加**。
+
+## 你怎么用
+
+1. 强刷看板（SW v29）
+2. 用邮箱注册（建议 `oppodanny@gmail.com`）并设密码（≥6 位）
+3. 新增/编辑/删除手动仓 → 多端实时同步
+4. 忘记密码走邮箱重置
 
 ## 相关文件
 
-- `auth.js` — stub API（`__FIREBASE_CONFIG__`）
-- `firebase-config.example.js` — 占位示例（无真实 key）
-- `index.html` — 门禁 DOM + 持仓弹窗
-- `theme-cyberpunk.css` — 霓虹主题
-- `sw.js` — shell 缓存（含 `auth.js`）
+- `firebase-config.js` — 网页 SDK 配置
+- `auth.js` — Auth + Firestore sync
+- `firestore.rules` / `firebase.json`
+- `index.html` — 门禁 UI + CRUD
+- `sw.js` — shell v29

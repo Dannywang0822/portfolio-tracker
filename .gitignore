@@ -3,5 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 
-# Local Firebase config (real keys — never commit)
-firebase-config.js
+# Firebase local cache / emulator
+.firebase/
+*-debug.log
+firebase-debug.log
