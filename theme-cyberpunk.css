@@ -97,6 +97,7 @@ body{background-attachment:scroll!important;}
 
 /* —— Auth gate (login / register / forgot) —— */
 .login-gate{
+  z-index:10000!important;
   background:
     radial-gradient(900px 480px at 8% -8%,rgba(255,43,214,.28),transparent 50%),
     radial-gradient(700px 400px at 95% 0%,rgba(0,240,255,.22),transparent 45%),

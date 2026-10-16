@@ -1,8 +1,8 @@
 /* 持仓跟踪 H5 · Service Worker
- * - 壳资源（HTML/CSS/manifest/icons）：缓存优先，离线可打开界面
- * - 行情请求（Yahoo / 代理）：网络优先，绝不把过期报价当成唯一来源
+ * - 壳资源：HTML/JS 网络优先（避免旧壳卡住登录门控），其余缓存优先
+ * - 行情请求：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v34";
+const CACHE_NAME = "portfolio-h5-shell-v35";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -47,13 +47,23 @@ function isQuoteRequest(url) {
   );
 }
 
+function isAuthCritical(url) {
+  const p = url.pathname || "";
+  return (
+    p.endsWith("/") ||
+    p.endsWith("/index.html") ||
+    p.endsWith("/auth.js") ||
+    p.endsWith("/firebase-config.js") ||
+    p.endsWith("/sw.js")
+  );
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
 
-  // Quote APIs: network-only (never serve stale prices from cache as sole source)
   if (isQuoteRequest(url)) {
     event.respondWith(
       fetch(req, { cache: "no-store" }).catch(() =>
@@ -66,21 +76,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Same-origin shell: cache-first, then network
-  if (url.origin === self.location.origin) {
+  if (url.origin !== self.location.origin) return;
+
+  // Auth / shell HTML+JS: network-first so login-gate fixes reach phones quickly
+  if (isAuthCritical(url)) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        const network = fetch(req)
-          .then((res) => {
-            if (res && res.ok) {
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-            }
-            return res;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match("./index.html")))
     );
+    return;
   }
+
+  // Other same-origin: cache-first, then network
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
 });

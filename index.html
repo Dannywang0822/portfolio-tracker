@@ -616,11 +616,18 @@
     .login-gate {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      /* Above theme-cyberpunk body::after (z-index 999) and all app chrome */
+      z-index: 10000;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+      min-height: 100%;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      width: 100%;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
       background:
         radial-gradient(900px 480px at 8% -8%, rgba(255, 43, 214, 0.22), transparent 50%),
         radial-gradient(700px 400px at 95% 0%, rgba(0, 240, 255, 0.16), transparent 45%),
@@ -1399,7 +1406,7 @@
 </head>
 <body>
   <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
-  <div class="login-gate" id="loginGate" hidden>
+  <div class="login-gate" id="loginGate">
     <div class="login-card auth-card">
       <div class="auth-brand">
         <h1>持仓跟踪</h1>
@@ -3720,12 +3727,25 @@
 
     async function bootApp() {
       refreshAuthModeUI();
+      /* Paint login immediately — never leave both gate + appRoot hidden (iOS blank screen). */
+      if (!isLoggedIn()) showLogin();
       if (window.PortfolioAuth && PortfolioAuth.isCloudReady() && PortfolioAuth.whenAuthReady) {
         try {
-          await PortfolioAuth.whenAuthReady();
+          const ready = PortfolioAuth.whenAuthReady(8000);
+          const timed = new Promise((resolve) => setTimeout(() => resolve("__timeout__"), 8500));
+          const user = await Promise.race([ready, timed]);
+          if (user === "__timeout__") {
+            console.warn("auth ready timed out");
+            if (window.PortfolioAuth.clearLegacyLocalAuth) PortfolioAuth.clearLegacyLocalAuth();
+          }
         } catch (e) {
           console.warn("auth ready", e);
+          if (window.PortfolioAuth.clearLegacyLocalAuth) PortfolioAuth.clearLegacyLocalAuth();
         }
+      } else if (window.PortfolioAuth && PortfolioAuth.isCloudReady && PortfolioAuth.isCloudReady()
+          && !(window.firebase && firebase.apps)) {
+        /* Config present but SDK blocked (common on some CN mobile networks) */
+        if (PortfolioAuth.clearLegacyLocalAuth) PortfolioAuth.clearLegacyLocalAuth();
       }
       if (isLoggedIn()) showApp();
       else showLogin();

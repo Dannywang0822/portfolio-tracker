@@ -90,9 +90,19 @@
   }
 
   function isLoggedIn() {
-    if (isCloudReady() && _currentUser) return true;
-    if (isCloudReady()) return false;
+    if (isCloudReady()) {
+      /* Cloud mode: only a live Firebase user counts — never trust stale localStorage alone. */
+      return !!_currentUser;
+    }
     return global.localStorage.getItem(AUTH_KEY) === "1";
+  }
+
+  /** Drop pre-Firebase local gate flag so a missing SDK cannot skip the login UI. */
+  function clearLegacyLocalAuth() {
+    try {
+      global.localStorage.removeItem(AUTH_KEY);
+      global.localStorage.removeItem(AUTH_EMAIL_KEY);
+    } catch (e) { /* ignore */ }
   }
 
   function setLoggedIn(on, email) {
@@ -281,28 +291,49 @@
     return holdingsCol(uid).doc(String(id)).delete();
   }
 
-  function whenAuthReady() {
+  function whenAuthReady(timeoutMs) {
     if (!isCloudReady()) return Promise.resolve(null);
+    if (!firebaseAvailable()) {
+      clearLegacyLocalAuth();
+      return Promise.resolve(null);
+    }
     if (_authReady) return _authReady;
+    var ms = typeof timeoutMs === "number" && timeoutMs > 0 ? timeoutMs : 8000;
     _authReady = new Promise(function (resolve) {
+      var settled = false;
+      function finish(user) {
+        if (settled) return;
+        settled = true;
+        resolve(user || null);
+      }
       try {
         var auth = ensureFirebase();
-        var settled = false;
         auth.onAuthStateChanged(function (user) {
           _currentUser = user || null;
           if (user) {
             setLoggedIn(true, user.email || "");
-            startHoldingsSync(user.uid).then(function () {
-              if (!settled) { settled = true; resolve(user); }
+            /* Do not block the login UI on Firestore — sync in background. */
+            startHoldingsSync(user.uid).catch(function (err) {
+              console.warn("[PortfolioAuth] holdings sync", err);
             });
+            finish(user);
           } else {
             stopHoldingsSync();
             setLoggedIn(false);
-            if (!settled) { settled = true; resolve(null); }
+            clearLegacyLocalAuth();
+            finish(null);
           }
         });
+        setTimeout(function () {
+          if (!settled) {
+            console.warn("[PortfolioAuth] auth ready timeout — showing login");
+            if (!_currentUser) clearLegacyLocalAuth();
+            finish(_currentUser);
+          }
+        }, ms);
       } catch (e) {
-        resolve(null);
+        clearLegacyLocalAuth();
+        finish(null);
       }
     });
     return _authReady;
@@ -423,6 +454,7 @@
     deleteHolding: deleteHolding,
     startHoldingsSync: startHoldingsSync,
     AUTH_KEY: AUTH_KEY,
+    clearLegacyLocalAuth: clearLegacyLocalAuth,
     boot: boot,
   };
 
