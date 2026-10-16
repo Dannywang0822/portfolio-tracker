@@ -1,24 +1,23 @@
 {
-  "updatedAt": "2026-10-15T15:48:22.323059+08:00",
+  "updatedAt": "2026-10-16T08:06:29.768883+08:00",
   "latest": {
-    "t0": "2026-10-14",
-    "capturedAt": "2026-10-15T15:48:22.323059+08:00",
-    "capturedAtNy": "2026-10-15T03:48:22.323076-04:00",
+    "t0": "2026-10-15",
+    "capturedAt": "2026-10-16T08:06:29.768883+08:00",
+    "capturedAtNy": "2026-10-15T20:06:29.768887-04:00",
     "fx": {
-      "hkd": 7.8474,
-      "cny": 6.6917
+      "hkd": 7.8469,
+      "cny": 6.6813
     },
-    "quotesUpdatedAt": "2026-10-15T14:54:38.354230+08:00",
-    "totalMvUsd": 2035078.17,
-    "totalCostUsd": 2470648.03,
-    "totalMvPrevCloseUsd": 2035078.17,
-    "dayChangeVsPrevCloseUsd": 0.0,
+    "quotesUpdatedAt": "2026-10-16T08:06:29.711010+08:00",
+    "totalMvUsd": 2029482.55,
+    "totalCostUsd": 2472115.45,
+    "totalMvPrevCloseUsd": 2019509.93,
+    "dayChangeVsPrevCloseUsd": 9972.62,
     "holdingCount": 26,
     "missingQuotes": [],
-    "dailyPnlVsPriorT0Usd": null,
-    "priorT0": null,
-    "note": "引导快照：以各标的 Yahoo previousClose 估算 T0 收盘市值；次日 Action 会写入正式 T0 对比",
-    "bootstrap": true
+    "dailyPnlVsPriorT0Usd": -5595.62,
+    "priorT0": "2026-10-14",
+    "note": "T0=美股常规交易日收盘日；此时 A股/港股该日历交易时段已结束"
   },
   "snapshots": [
     {
@@ -40,6 +39,25 @@
       "priorT0": null,
       "note": "引导快照：以各标的 Yahoo previousClose 估算 T0 收盘市值；次日 Action 会写入正式 T0 对比",
       "bootstrap": true
+    },
+    {
+      "t0": "2026-10-15",
+      "capturedAt": "2026-10-16T08:06:29.768883+08:00",
+      "capturedAtNy": "2026-10-15T20:06:29.768887-04:00",
+      "fx": {
+        "hkd": 7.8469,
+        "cny": 6.6813
+      },
+      "quotesUpdatedAt": "2026-10-16T08:06:29.711010+08:00",
+      "totalMvUsd": 2029482.55,
+      "totalCostUsd": 2472115.45,
+      "totalMvPrevCloseUsd": 2019509.93,
+      "dayChangeVsPrevCloseUsd": 9972.62,
+      "holdingCount": 26,
+      "missingQuotes": [],
+      "dailyPnlVsPriorT0Usd": -5595.62,
+      "priorT0": "2026-10-14",
+      "note": "T0=美股常规交易日收盘日；此时 A股/港股该日历交易时段已结束"
     }
   ]
 }
