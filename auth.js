@@ -1,8 +1,9 @@
 /**
- * Portfolio Auth + Firestore holdings sync (Firebase Email/Password).
+ * Portfolio Auth + optional Firestore holdings sync.
  *
- * AUTH_GATE_ENABLED=false: no login UI; app uses localStorage + built-in HOLDINGS.
- * Firebase code stays dormant until the flag is flipped back and gstatic scripts restored.
+ * AUTH_GATE_ENABLED=true: show login UI. Without Firebase SDK/config → local-only
+ * gate (danny / 123) + localStorage session. Cloud sync stays off until gstatic
+ * scripts and firebase-config.js are restored in index.html.
  *
  * Config via window.__FIREBASE_CONFIG__ (see firebase-config.js).
  * Holdings path: users/{uid}/holdings/{holdingId}
@@ -11,8 +12,8 @@
 (function (global) {
   "use strict";
 
-  /** Set true to restore Firebase login gate + cloud sync (also re-enable gstatic scripts in index.html). */
-  var AUTH_GATE_ENABLED = false;
+  /** Login UI on. Local credentials when cloud is not loaded; do not re-enable gstatic for CN. */
+  var AUTH_GATE_ENABLED = true;
 
   var LOCAL_USER = "danny";
   var LOCAL_PASS = "123";
@@ -368,7 +369,7 @@
     var id = String(emailOrUser || "").trim();
     var pass = String(password || "");
     if (!id || !pass) {
-      return Promise.reject(new Error("请填写邮箱和密码"));
+      return Promise.reject(new Error(isCloudReady() ? "请填写邮箱和密码" : "请填写用户名和密码"));
     }
     if (isCloudReady()) {
       return assertAllowedEmail(id).then(function (em) {
@@ -395,7 +396,7 @@
       pass === LOCAL_PASS;
     if (!localOk) localOk = id === LOCAL_USER && pass === LOCAL_PASS;
     if (!localOk) {
-      return Promise.reject(new Error("邮箱或密码错误"));
+      return Promise.reject(new Error("用户名或密码错误"));
     }
     setLoggedIn(true, id);
     return Promise.resolve({ mode: "local", email: id });
@@ -406,16 +407,14 @@
   }
 
   function resetPassword(email) {
+    if (!isCloudReady()) {
+      return Promise.reject(new Error("本地门禁不支持邮箱重置，请使用用户名 danny 与既定密码"));
+    }
     var raw = String(email || "").trim();
     if (!raw) {
       return Promise.reject(new Error("请填写授权邮箱"));
     }
     return assertAllowedEmail(raw).then(function (em) {
-      if (!isCloudReady()) {
-        return Promise.reject(
-          new Error("忘记密码将走邮箱重置；云端未接入前请联系看板管理员")
-        );
-      }
       try { ensureFirebase(); } catch (e) { return Promise.reject(e); }
       return _auth
         .sendPasswordResetEmail(em)

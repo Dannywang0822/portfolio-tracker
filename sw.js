@@ -2,7 +2,7 @@
  * - 壳资源：HTML/JS 网络优先（避免旧壳卡住登录门控），其余缓存优先
  * - 行情请求：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v36";
+const CACHE_NAME = "portfolio-h5-shell-v37";
 const SHELL_ASSETS = [
   "./",
   "./index.html",

@@ -1412,13 +1412,13 @@
     <div class="login-card auth-card">
       <div class="auth-brand">
         <h1>持仓跟踪</h1>
-        <p class="login-sub" id="loginSub">授权账号登录 · 持仓多端实时同步</p>
+        <p class="login-sub" id="loginSub">本机登录 · 持仓保存在此设备</p>
       </div>
       <div class="auth-panel" id="panelLogin" data-auth-panel="login">
         <form id="loginForm" autocomplete="on">
           <div class="login-field">
-            <label for="loginEmail">邮箱</label>
-            <input id="loginEmail" name="email" type="email" inputmode="email" autocomplete="username" required autofocus value="oppodanny@gmail.com" placeholder="oppodanny@gmail.com" />
+            <label for="loginEmail" id="loginUserLabel">用户名</label>
+            <input id="loginEmail" name="username" type="text" inputmode="text" autocomplete="username" required autofocus value="danny" placeholder="danny" />
           </div>
           <div class="login-field">
             <label for="loginPass">密码</label>
@@ -1427,7 +1427,7 @@
               <button type="button" class="pw-toggle" id="loginPassToggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
             </div>
           </div>
-          <div class="auth-links">
+          <div class="auth-links" id="authLinksRow" hidden>
             <button type="button" id="forgotLink">忘记密码？</button>
           </div>
           <p class="login-error" id="loginError" role="alert"></p>
@@ -1450,7 +1450,7 @@
       </div>
 
       <p class="login-note auth-note" id="authModeNote">
-        仅授权账号可登录 · 已关闭公开注册
+        本机门禁 · 持仓仅保存在此设备（不同步）
       </p>
       <div style="text-align:center">
         <span class="auth-mode-pill" id="authModePill">LOCAL</span>
@@ -1468,7 +1468,7 @@
         <div class="toolbar-actions">
           <button type="button" id="refreshBtn">刷新</button>
           <button type="button" id="addHoldingBtn">＋新增</button>
-          <button type="button" id="logoutBtn" title="退出登录" hidden>退出</button>
+          <button type="button" id="logoutBtn" title="退出登录">退出</button>
         </div>
       </div>
     </header>
@@ -1683,8 +1683,8 @@
     </div>
   </div>
 
-  <!-- Firebase SDK disabled while AUTH_GATE_ENABLED=false in auth.js (gstatic often blocked in CN).
-       To restore login/cloud sync: set AUTH_GATE_ENABLED=true and uncomment the three gstatic + firebase-config lines. -->
+  <!-- Firebase SDK kept off (gstatic often blocked in CN). Local login gate is on in auth.js.
+       To restore cloud sync: uncomment the three gstatic + firebase-config lines below. -->
   <!--
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -3501,6 +3501,9 @@
       const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
       const pill = el("authModePill");
       const note = el("authModeNote");
+      const label = el("loginUserLabel");
+      const userInp = el("loginEmail");
+      const links = el("authLinksRow");
       if (pill) {
         pill.textContent = cloud ? "CLOUD" : "LOCAL";
         pill.classList.toggle("cloud", !!cloud);
@@ -3508,14 +3511,33 @@
       if (note) {
         note.textContent = cloud
           ? "Firebase 已接通 · 仅授权账号可登录 · 已关闭公开注册 · 持仓实时同步"
-          : "过渡期：未接 Firebase 时可用本地门禁（danny / 123）。不构成真实安全防护。";
+          : "本机门禁（danny / 123）· 持仓仅保存在此设备，不同步到其他手机/电脑";
       }
       const sub = el("loginSub");
       if (sub) {
         sub.textContent = cloud
           ? "授权账号登录后，持仓会实时同步到各设备"
-          : "邮箱登录后多端同步持仓（Firebase 接入中）";
+          : "本机登录 · 持仓保存在此设备";
       }
+      if (label) label.textContent = cloud ? "邮箱" : "用户名";
+      if (userInp) {
+        if (cloud) {
+          userInp.type = "email";
+          userInp.inputMode = "email";
+          userInp.name = "email";
+          userInp.placeholder = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+          if (!userInp.value || userInp.value === "danny") {
+            userInp.value = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+          }
+        } else {
+          userInp.type = "text";
+          userInp.inputMode = "text";
+          userInp.name = "username";
+          userInp.placeholder = "danny";
+          if (!userInp.value || userInp.value.includes("@")) userInp.value = "danny";
+        }
+      }
+      if (links) links.hidden = !cloud;
     }
 
     function switchAuthPanel(name) {
@@ -3531,7 +3553,12 @@
       refreshAuthModeUI();
       if (name === "login") {
         const u = el("loginEmail");
-        if (u && !u.value) u.value = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+        const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
+        if (u && !u.value) {
+          u.value = cloud
+            ? ((window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com")
+            : "danny";
+        }
         el("loginPass")?.focus() || u?.focus();
       } else if (name === "forgot") {
         const f = el("forgotEmail");
@@ -3597,9 +3624,14 @@
 
     function showApp() {
       el("loginGate").hidden = true;
+      el("loginGate").setAttribute("aria-hidden", "true");
       el("appRoot").hidden = false;
       const sync = el("syncBar");
       if (sync) sync.hidden = false;
+      try {
+        const gateOn = window.PortfolioAuth && PortfolioAuth.isAuthGateEnabled && PortfolioAuth.isAuthGateEnabled();
+        el("logoutBtn").hidden = !gateOn;
+      } catch (e) { /* ignore */ }
       measureChrome();
       // 手动标的：先用本机缓存价占位，再异步刷新
       applyCachedCustomQuotes();
@@ -3613,6 +3645,7 @@
     function showLogin() {
       el("appRoot").hidden = true;
       el("loginGate").hidden = false;
+      el("loginGate").setAttribute("aria-hidden", "false");
       const sync = el("syncBar");
       if (sync) sync.hidden = true;
       switchAuthPanel("login");
@@ -3639,10 +3672,13 @@
       const email = el("loginEmail").value.trim();
       const pass = el("loginPass").value;
       showAuthError(el("loginError"), "");
-      const allowed = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
-      if (email.toLowerCase() !== allowed.toLowerCase()) {
-        showAuthError(el("loginError"), "仅允许授权账号登录（" + allowed + "）");
-        return;
+      const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
+      if (cloud) {
+        const allowed = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
+        if (email.toLowerCase() !== allowed.toLowerCase()) {
+          showAuthError(el("loginError"), "仅允许授权账号登录（" + allowed + "）");
+          return;
+        }
       }
       setAuthBusy(el("loginForm"), true, "登录");
       try {
@@ -3732,7 +3768,7 @@
     }
 
     async function bootApp() {
-      /* AUTH_GATE_ENABLED=false: skip Firebase / login UI; open holdings from localStorage + HOLDINGS. */
+      /* Gate off → open app. Gate on + no Firebase → local danny/123 + localStorage session. */
       const gateOn = window.PortfolioAuth && PortfolioAuth.isAuthGateEnabled && PortfolioAuth.isAuthGateEnabled();
       if (!gateOn) {
         try { el("logoutBtn").hidden = true; } catch (e) { /* ignore */ }
