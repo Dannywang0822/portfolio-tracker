@@ -967,6 +967,12 @@
       border-radius: 10px;
       outline: none;
     }
+    /* Mobile tap-target hardening: 44px chips, sort isolated on its own row */
+    .chip { min-height: 44px; padding: 10px 14px; position: relative; z-index: 1; }
+    .chip-row { gap: 8px; padding: 2px 0 4px; position: relative; z-index: 2; }
+    .sort-row { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
+    .sort-row select { min-height: 44px; max-width: 220px; flex: 0 1 220px; }
+    .sort-row .pos-count { margin-left: auto; }
     .pos-count {
       color: var(--dim);
       font-size: 0.72rem;
@@ -1333,8 +1339,8 @@
       .summary { gap: 8px; margin: 10px 0 8px; }
       .summary-card { padding: 12px 12px 10px; }
       .summary-card.pnl-hero { padding: 14px 14px 12px; }
-      .view-bar { gap: 6px; padding: 6px 0 4px; margin-bottom: 10px; }
-      .chip { padding: 6px 10px; min-height: 32px; font-size: 0.74rem; }
+      .view-bar { gap: 8px; padding: 6px 0 6px; margin-bottom: 10px; }
+      .chip { padding: 10px 12px; min-height: 44px; font-size: 0.78rem; }
       .card { min-height: 140px; padding: 11px 10px 9px; }
       .brand p { font-size: 0.72rem; }
       .brand-row .toolbar-actions { flex-wrap: nowrap; justify-content: flex-end; gap: 4px; }
