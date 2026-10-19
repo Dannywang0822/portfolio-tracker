@@ -489,11 +489,19 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 6px 8px;
+      gap: 4px 8px;
       font-family: "IBM Plex Mono", ui-monospace, monospace;
       font-size: 0.82rem;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
+    }
+
+    .card-price .px-label {
+      font-family: inherit;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--dim);
+      letter-spacing: 0;
     }
 
     .card-price .day {
@@ -2715,11 +2723,12 @@
         const isOpen = openIds.has(h.id) ? " open" : "";
         const noPx = loading || missing;
         const pnlFace = noPx ? "…" : fmtPct(pnlPct);
-        const priceFace = loading ? "加载中" : (missing ? "—" : fmtMoney(price, h.currency, 3));
+        const priceFace = loading ? "加载中" : (missing ? "暂无" : fmtMoney(price, h.currency, 3));
         const dayFace = noPx ? "" : fmtPct(changePct);
         const mvText = noPx ? "—" : fmtMoney(mv, h.currency);
         const pnlText = loading ? "—" : (missing ? "N/A" : fmtMoney(pnl, h.currency));
         const pnlPctText = loading ? "—" : (missing ? "N/A" : fmtPct(pnlPct));
+        const priceCls = noPx ? "flat" : pnlClass(changePct);
         const customBadge = h.custom && !h.override ? `<span class="badge custom-badge">手动</span>` : "";
         const overrideBadge = h.override ? `<span class="badge custom-badge">已改</span>` : "";
         const hasIssue = h.issues && h.issues.length;
@@ -2753,12 +2762,18 @@
             <div class="card-face">
               <div class="card-pnl ${noPx ? "flat" : pnlClass(pnlPct)}">${pnlFace}</div>
               <div class="card-price">
-                <span class="${noPx ? "" : pnlClass(changePct)}">${priceFace}</span>
-                <span class="day ${noPx ? "" : pnlClass(changePct)}">${dayFace}</span>
+                <span class="px-label">现价</span>
+                <span class="${priceCls}">${priceFace}</span>
+                <span class="day ${priceCls}">${dayFace}</span>
               </div>
               <div class="card-meta">${fmtNum(h.shares, 0)} 股 · 成本 ${fmtMoney(h.avgCost, h.currency)}</div>
             </div>
             <div class="card-more">
+              <div class="metric">
+                <div class="k">现价</div>
+                <div class="v ${priceCls}">${priceFace}</div>
+                <div class="s ${priceCls}">${dayFace || (missing ? "暂无报价" : "")}</div>
+              </div>
               <div class="metric">
                 <div class="k">市值</div>
                 <div class="v">${mvText}</div>
