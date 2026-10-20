@@ -29,6 +29,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
 .down{color:var(--green)!important;text-shadow:0 0 8px rgba(43,255,154,.5);}
 .chip{background:rgba(20,22,61,.9)!important;border:1px solid #3b2f7a!important;color:var(--muted)!important;font-weight:600;}
 .chip.active{background:linear-gradient(90deg,#ff2bd6,#7a3cff)!important;border-color:#ff2bd6!important;color:#fff!important;box-shadow:0 0 12px rgba(255,43,214,.6);}
+.summary-mkt-filter .chip{font-family:"Rajdhani","PingFang SC","Noto Sans SC",sans-serif;letter-spacing:.02em;}
+.summary-mkt-filter .chip.active{box-shadow:0 0 12px rgba(255,43,214,.65),inset 0 0 8px rgba(0,240,255,.18)!important;}
 .badge{background:rgba(0,0,0,.25);}
 .badge.warn-badge{color:#ffd400!important;border-color:#ffd400!important;background:rgba(255,212,0,.12)!important;box-shadow:0 0 8px rgba(255,212,0,.35);}
 .issue-tag{color:#ffd400!important;}

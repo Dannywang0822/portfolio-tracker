@@ -286,6 +286,31 @@
       font-weight: 500;
       letter-spacing: 0.02em;
       margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .summary-card-head {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .summary-card-head .label { margin-bottom: 0; }
+    .summary-mkt-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0;
+    }
+    .summary-mkt-filter .chip {
+      flex: 1 1 calc(25% - 6px);
+      max-width: 112px;
+      min-width: 64px;
+      min-height: 44px;
+      padding: 8px 8px;
+      text-align: center;
+      font-size: 0.8rem;
     }
 
     .summary-card .value {
@@ -1515,7 +1540,15 @@
 
     <div class="summary" id="summary">
       <div class="summary-card pnl-hero">
-        <div class="label">浮动盈亏</div>
+        <div class="summary-card-head">
+          <div class="label">浮动盈亏</div>
+          <div class="summary-mkt-filter" role="tablist" aria-label="浮动盈亏市场">
+            <button type="button" class="chip active" role="tab" aria-selected="true" data-pnl-market="all">全部</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-pnl-market="CNY">A股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-pnl-market="HKD">港股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-pnl-market="USD">美股</button>
+          </div>
+        </div>
         <div class="tri" aria-label="浮动盈亏三币种">
           <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumPnl">加载中</span></div>
           <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumPnlHkd">HK$—</span></div>
@@ -1524,7 +1557,15 @@
         <div class="sub" id="sumPnlPct">—</div>
       </div>
       <div class="summary-card daily-pnl-card">
-        <div class="label" id="sumDailyLabel">日盈亏（T0·三市收盘后）</div>
+        <div class="summary-card-head">
+          <div class="label" id="sumDailyLabel">日盈亏（T0·三市收盘后）</div>
+          <div class="summary-mkt-filter" role="tablist" aria-label="日盈亏市场">
+            <button type="button" class="chip active" role="tab" aria-selected="true" data-daily-market="all">全部</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-daily-market="CNY">A股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-daily-market="HKD">港股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-daily-market="USD">美股</button>
+          </div>
+        </div>
         <div class="tri" aria-label="日盈亏三币种">
           <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumDaily">加载中</span></div>
           <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumDailyHkd">HK$—</span></div>
@@ -2687,6 +2728,42 @@
 
     const viewState = { account: "all", market: "all", sort: "default" };
 
+    /* 汇总卡市场筛选，与持仓列表的市场芯片独立。币种标签与列表一致：CNY/HKD/USD。 */
+    const SUMMARY_MKT_KEY = "portfolio-summary-market-filters";
+    const SUMMARY_MKT_VALUES = ["all", "CNY", "HKD", "USD"];
+    const summaryMkt = { pnl: "all", daily: "all" };
+
+    function loadSummaryMkt() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(SUMMARY_MKT_KEY) || "null");
+        if (!raw || typeof raw !== "object") return;
+        if (SUMMARY_MKT_VALUES.includes(raw.pnl)) summaryMkt.pnl = raw.pnl;
+        if (SUMMARY_MKT_VALUES.includes(raw.daily)) summaryMkt.daily = raw.daily;
+      } catch (e) { /* keep defaults */ }
+    }
+    function saveSummaryMkt() {
+      try {
+        localStorage.setItem(SUMMARY_MKT_KEY, JSON.stringify({
+          pnl: summaryMkt.pnl,
+          daily: summaryMkt.daily,
+        }));
+      } catch (e) { /* ignore */ }
+    }
+    function syncSummaryMktChips() {
+      document.querySelectorAll("[data-pnl-market]").forEach((b) => {
+        const on = (b.getAttribute("data-pnl-market") || "all") === summaryMkt.pnl;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.querySelectorAll("[data-daily-market]").forEach((b) => {
+        const on = (b.getAttribute("data-daily-market") || "all") === summaryMkt.daily;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+    loadSummaryMkt();
+    syncSummaryMktChips();
+
     function marketLabel(currency) {
       if (currency === "CNY") return "A股";
       if (currency === "HKD") return "港股";
@@ -2729,6 +2806,32 @@
       return list;
     }
 
+    /**
+     * Holdings for one summary card.
+     * Market tag is h.currency — the same field as the holdings-list chips
+     * (CNY A股 / HKD 港股 / USD 美股). Built-ins store that currency; custom
+     * rows take it from inferCurrencyFromCode (.SS/.SZ/.SH → CNY, .HK → HKD,
+     * letter tickers → USD), so A-share ETFs stay A股.
+     * Account chips narrow this set; the list market chip does not.
+     */
+    function holdingsForCard(market) {
+      let list = allHoldings();
+      if (viewState.account !== "all") {
+        list = list.filter((h) => h.account === viewState.account);
+      }
+      if (market && market !== "all") {
+        list = list.filter((h) => h.currency === market);
+      }
+      return list;
+    }
+
+    function summaryScopeText(market) {
+      const bits = [];
+      if (market && market !== "all") bits.push(marketLabel(market));
+      if (viewState.account !== "all") bits.push(accountLabel(viewState.account));
+      return bits.join("·");
+    }
+
     function visibleHoldings() {
       let list = filteredHoldings();
       const sortKey = viewState.sort;
@@ -2763,6 +2866,9 @@
       const show = rect.bottom < headerH + 8;
       sticky.classList.toggle("show", show);
       if (!show) return;
+      const scope = summaryScopeText(summaryMkt.pnl);
+      const k = sticky.querySelector(".k");
+      if (k) k.textContent = scope ? `浮动盈亏（USD · ${scope}）` : "浮动盈亏（USD）";
       sticky.querySelector(".v").textContent = el("sumPnl").textContent;
       sticky.querySelector(".v").className = "v " + el("sumPnl").className.replace("tri-v", "").replace("value", "").trim();
       el("stickyPnlPct").textContent = el("sumPnlPct").textContent;
@@ -2926,7 +3032,106 @@
       return any ? total : null;
     }
 
-    function renderDailyPnl(totalMvUsd) {
+    /** Sum (last − previousClose) × shares in USD for a holding list. */
+    function dayChangeUsd(list) {
+      let live = 0;
+      let prev = 0;
+      let priced = 0;
+      for (const h of list) {
+        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) continue;
+        const q = lastGood[h.id];
+        if (!q || q.price == null) continue;
+        const mvUsd = toUsd(h.shares * q.price, h.currency);
+        if (mvUsd == null) continue;
+        const px = q.previousClose != null ? q.previousClose : q.price;
+        const prevUsd = toUsd(h.shares * px, h.currency);
+        if (prevUsd == null) continue;
+        live += mvUsd;
+        prev += prevUsd;
+        priced += 1;
+      }
+      if (!priced) return null;
+      return { pnl: live - prev, live, prev, priced };
+    }
+
+    function aggregateUsd(list) {
+      let totalCostUsd = 0;
+      let totalMvUsd = 0;
+      let allReady = true;
+      let missingFx = false;
+      let priced = 0;
+      const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
+      const missingQuote = [];
+      const badCcy = [];
+      for (const h of list) {
+        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) {
+          badCcy.push(h.name || h.ticker);
+          continue;
+        }
+        const q = lastGood[h.id];
+        if (!q || q.price == null) {
+          allReady = false;
+          if (quotesSettled) missingQuote.push(h.name || h.ticker);
+          continue;
+        }
+        const cost = h.shares * h.avgCost;
+        const mv = h.shares * q.price;
+        const costUsd = toUsd(cost, h.currency);
+        const mvUsd = toUsd(mv, h.currency);
+        if (costUsd == null || mvUsd == null) {
+          missingFx = true;
+          if (skipped[h.currency]) {
+            skipped[h.currency].cost += cost;
+            skipped[h.currency].mv += mv;
+          }
+        } else {
+          totalCostUsd += costUsd;
+          totalMvUsd += mvUsd;
+          priced += 1;
+        }
+      }
+      return { totalCostUsd, totalMvUsd, allReady, missingFx, skipped, missingQuote, badCcy, priced };
+    }
+
+    function paintFloatingPnl() {
+      const market = summaryMkt.pnl;
+      const list = holdingsForCard(market);
+      const scope = summaryScopeText(market);
+      const agg = aggregateUsd(list);
+      const clearVals = () => {
+        el("sumPnl").textContent = quotesSettled ? "—" : "加载中";
+        el("sumPnl").className = "tri-v";
+        el("sumPnlHkd").textContent = "HK$—";
+        el("sumPnlHkd").className = "tri-v";
+        el("sumPnlCny").textContent = "¥—";
+        el("sumPnlCny").className = "tri-v";
+        el("sumPnlPct").className = "sub";
+      };
+      if (!list.length) {
+        clearVals();
+        el("sumPnlPct").textContent = scope ? `${scope} · 暂无持仓` : "暂无持仓";
+        return;
+      }
+      if (!agg.priced) {
+        clearVals();
+        el("sumPnlPct").textContent = quotesSettled ? (scope ? `${scope} · 暂无报价` : "暂无报价") : "—";
+        return;
+      }
+      const pnl = agg.totalMvUsd - agg.totalCostUsd;
+      const pnlTri = fmtTriCurrency(pnl);
+      const pnlSign = (t) => (pnl > 0 ? "+" : "") + t;
+      el("sumPnl").textContent = pnlSign(pnlTri.usd);
+      el("sumPnl").className = "tri-v " + pnlClass(pnl);
+      el("sumPnlHkd").textContent = pnlSign(pnlTri.hkd);
+      el("sumPnlHkd").className = "tri-v " + pnlClass(pnl);
+      el("sumPnlCny").textContent = pnlSign(pnlTri.cny);
+      el("sumPnlCny").className = "tri-v " + pnlClass(pnl);
+      const pct = agg.totalCostUsd ? fmtPct((pnl / agg.totalCostUsd) * 100) : "—";
+      el("sumPnlPct").textContent = scope ? `${pct} · ${scope}` : pct;
+      el("sumPnlPct").className = "sub " + pnlClass(pnl);
+    }
+
+    function renderDailyPnl() {
       const labelEl = el("sumDailyLabel");
       const subEl = el("sumDailySub");
       const setTri = (usdAmt) => {
@@ -2939,6 +3144,37 @@
         el("sumDailyCny").textContent = usdAmt == null ? "¥—" : sign(tri.cny);
         el("sumDailyCny").className = "tri-v " + pnlClass(usdAmt);
       };
+
+      const market = summaryMkt.daily;
+      const scoped = (market && market !== "all") || viewState.account !== "all";
+      if (scoped) {
+        const list = holdingsForCard(market);
+        const scope = summaryScopeText(market) || "该范围";
+        const est = dayChangeUsd(list);
+        if (!list.length) {
+          labelEl.textContent = `日盈亏（仅${scope}）`;
+          setTri(null);
+          subEl.textContent = "该范围暂无持仓";
+          return;
+        }
+        if (!est) {
+          labelEl.textContent = `日盈亏（仅${scope}）`;
+          setTri(null);
+          subEl.textContent = quotesSettled ? "该范围暂无可用报价" : "等待行情";
+          return;
+        }
+        const pct = est.prev ? (est.pnl / est.prev) * 100 : null;
+        labelEl.textContent = `日盈亏（仅${scope}·相对昨收）`;
+        setTri(est.pnl);
+        subEl.textContent =
+          `仅${scope}持仓 · 现价减昨收` +
+          (pct != null ? ` · ${fmtPct(pct)}` : "") +
+          " · 红涨绿跌";
+        return;
+      }
+
+      const liveAll = liveTotalMvUsd();
+      const totalMvUsd = (liveAll.ok || liveAll.total) ? liveAll.total : null;
 
       const snaps = dailyPnlData && Array.isArray(dailyPnlData.snapshots) ? dailyPnlData.snapshots : [];
       const latest = dailyPnlData && dailyPnlData.latest ? dailyPnlData.latest : (snaps.length ? snaps[snaps.length - 1] : null);
@@ -3004,41 +3240,8 @@
       const hkdRate = lastFx && lastFx.hkd != null ? lastFx.hkd : null;
       const cnyRate = lastFx && lastFx.cny != null ? lastFx.cny : null;
 
-      let totalCostUsd = 0;
-      let totalMvUsd = 0;
-      let allReady = true;
-      let missingFx = false;
-      const skipped = { HKD: { cost: 0, mv: 0 }, CNY: { cost: 0, mv: 0 } };
-
-      const missingQuote = [];
-      const badCcy = [];
-      const summaryList = filteredHoldings();
-      for (const h of summaryList) {
-        if (h.custom && h.issues && h.issues.some((x) => /货币|只能选/.test(x))) {
-          badCcy.push(h.name || h.ticker);
-          continue;
-        }
-        const q = lastGood[h.id];
-        if (!q || q.price == null) {
-          allReady = false;
-          if (quotesSettled) missingQuote.push(h.name || h.ticker);
-          continue;
-        }
-        const cost = h.shares * h.avgCost;
-        const mv = h.shares * q.price;
-        const costUsd = toUsd(cost, h.currency);
-        const mvUsd = toUsd(mv, h.currency);
-        if (costUsd == null || mvUsd == null) {
-          missingFx = true;
-          if (skipped[h.currency]) {
-            skipped[h.currency].cost += cost;
-            skipped[h.currency].mv += mv;
-          }
-        } else {
-          totalCostUsd += costUsd;
-          totalMvUsd += mvUsd;
-        }
-      }
+      const agg = aggregateUsd(filteredHoldings());
+      const { totalCostUsd, totalMvUsd, allReady, missingFx, skipped, missingQuote, badCcy } = agg;
 
       if (!allReady && Object.keys(lastGood).length === 0) {
         el("sumCost").textContent = "加载中";
@@ -3060,7 +3263,6 @@
         return;
       }
 
-      const pnl = totalMvUsd - totalCostUsd;
       const costTri = fmtTriCurrency(totalCostUsd);
       const mvTri = fmtTriCurrency(totalMvUsd);
       el("sumCost").textContent = costTri.usd;
@@ -3069,16 +3271,7 @@
       el("sumMv").textContent = mvTri.usd;
       el("sumMvHkd").textContent = mvTri.hkd;
       el("sumMvCny").textContent = mvTri.cny;
-      const pnlTri = fmtTriCurrency(pnl);
-      const pnlSign = (t) => (pnl > 0 ? "+" : "") + t;
-      el("sumPnl").textContent = pnlSign(pnlTri.usd);
-      el("sumPnl").className = "tri-v " + pnlClass(pnl);
-      el("sumPnlHkd").textContent = pnlSign(pnlTri.hkd);
-      el("sumPnlHkd").className = "tri-v " + pnlClass(pnl);
-      el("sumPnlCny").textContent = pnlSign(pnlTri.cny);
-      el("sumPnlCny").className = "tri-v " + pnlClass(pnl);
-      el("sumPnlPct").textContent = totalCostUsd ? fmtPct((pnl / totalCostUsd) * 100) : "—";
-      el("sumPnlPct").className = "sub " + pnlClass(pnl);
+      paintFloatingPnl();
 
       el("sumFxHkd").textContent = hkdRate != null ? fmtNum(hkdRate, 4) : "—";
       el("sumFxCny").textContent = cnyRate != null ? fmtNum(cnyRate, 4) : "—";
@@ -3113,7 +3306,7 @@
         fxNote.className = "fx-note warn";
         fxNote.textContent = prev + msg;
       }
-      renderDailyPnl(totalMvUsd);
+      renderDailyPnl();
       syncStickyPnl();
     }
 
@@ -3892,6 +4085,24 @@
           b.classList.toggle("active", b === btn);
         });
         renderCards();
+        renderSummary();
+      });
+    });
+    document.querySelectorAll("[data-pnl-market]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-pnl-market") || "all";
+        summaryMkt.pnl = SUMMARY_MKT_VALUES.includes(next) ? next : "all";
+        saveSummaryMkt();
+        syncSummaryMktChips();
+        renderSummary();
+      });
+    });
+    document.querySelectorAll("[data-daily-market]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-daily-market") || "all";
+        summaryMkt.daily = SUMMARY_MKT_VALUES.includes(next) ? next : "all";
+        saveSummaryMkt();
+        syncSummaryMktChips();
         renderSummary();
       });
     });
