@@ -207,10 +207,11 @@
       color: var(--text);
       font: inherit;
       font-weight: 600;
-      font-size: 0.9rem;
-      padding: 0 18px;
-      min-height: 44px;
-      min-width: 72px;
+      font-size: 0.78rem;
+      line-height: 1;
+      padding: 0 12px;
+      height: 32px;
+      min-height: 32px;
       border-radius: 999px;
       cursor: pointer;
       touch-action: manipulation;
@@ -291,26 +292,49 @@
 
     .summary-card-head {
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .summary-card-head .label { margin-bottom: 0; }
+    .summary-card-head .label {
+      margin-bottom: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      line-height: 1.3;
+    }
     .summary-mkt-filter {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      gap: 4px;
       margin: 0;
+      flex: 0 0 auto;
     }
     .summary-mkt-filter .chip {
-      flex: 1 1 calc(25% - 6px);
-      max-width: 112px;
-      min-width: 64px;
-      min-height: 44px;
-      padding: 8px 8px;
-      text-align: center;
-      font-size: 0.8rem;
+      position: relative;
+      flex: 0 0 auto;
+      min-width: 0;
+      max-width: none;
+      height: 32px;
+      min-height: 32px;
+      padding: 0 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+    /* Extra hit slop so a 32px chip stays easy to tap without looking larger. */
+    .summary-mkt-filter .chip::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      right: -2px;
+      top: 50%;
+      height: 36px;
+      transform: translateY(-50%);
     }
 
     .summary-card .value {
@@ -629,14 +653,14 @@
       .brand h1 { font-size: 1.35rem; }
     }
 
-    /* Foldable / mid widths: summary can share one row */
+    /* Mid widths: 盈亏 cards full width; 成本 / 市值 share one even row */
     @media (min-width: 600px) {
       .wrap { max-width: 880px; }
       .summary {
-        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
-      .summary-card.pnl-hero { grid-column: auto; padding: 14px 14px 12px; }
+      .summary-card.pnl-hero { grid-column: 1 / -1; padding: 14px 14px 12px; }
       .summary-card.pnl-hero .tri-row:first-child .tri-v { font-size: clamp(1.05rem, 2.4vw, 1.45rem); }
       .market-hours-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     }
@@ -898,10 +922,12 @@
       background: transparent;
       color: var(--muted);
       font: inherit;
-      font-weight: 500;
-      font-size: 0.8rem;
-      padding: 0 14px;
-      min-height: 44px;
+      font-weight: 600;
+      font-size: 0.78rem;
+      line-height: 1;
+      padding: 0 12px;
+      height: 32px;
+      min-height: 32px;
       border-radius: 999px;
       cursor: pointer;
       touch-action: manipulation;
@@ -1068,9 +1094,8 @@
       .summary-card .ccy-multi { font-size: 0.62rem; }
       .summary-card .tri-ccy { font-size: 0.55rem; padding: 0 4px; }
       .fx-strip { font-size: 0.62rem; padding: 4px 8px; gap: 2px 6px; }
-      .toolbar-actions { gap: 5px; }
-      .toolbar-actions > button { min-width: 0; padding-left: 10px; padding-right: 10px; }
-      button#refreshBtn, button#addHoldingBtn, button#logoutBtn { min-height: 36px; font-size: 0.78rem; }
+      .toolbar-actions { gap: 6px; }
+      .toolbar-actions > button { min-width: 0; }
     }
 
     button#addHoldingBtn {
@@ -1079,16 +1104,17 @@
       background: linear-gradient(180deg, #2563eb, #1d4ed8);
       color: #fff;
       font: inherit;
-      font-size: 0.9rem;
+      font-size: 0.78rem;
       font-weight: 600;
-      padding: 0 16px;
-      min-height: 44px;
-      min-width: 72px;
+      line-height: 1;
+      padding: 0 12px;
+      height: 32px;
+      min-height: 32px;
       border-radius: 999px;
       cursor: pointer;
       touch-action: manipulation;
       white-space: nowrap;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.18);
     }
     button#addHoldingBtn:active { transform: scale(0.97); }
 
@@ -1100,9 +1126,10 @@
 
     button#logoutBtn {
       margin-left: 0;
-      padding: 0 14px;
-      min-height: 44px;
-      font-size: 0.85rem;
+      padding: 0 12px;
+      height: 32px;
+      min-height: 32px;
+      font-size: 0.78rem;
     }
     /* Auth gate currently off — keep chrome free of login/logout */
     button#logoutBtn[hidden] { display: none !important; }
@@ -1385,10 +1412,10 @@
       .chip { padding: 10px 12px; min-height: 44px; font-size: 0.78rem; }
       .card { min-height: 140px; padding: 11px 10px 9px; }
       .brand p { font-size: 0.72rem; }
-      .brand-row .toolbar-actions { flex-wrap: nowrap; justify-content: flex-end; gap: 4px; }
-      .brand-row .toolbar-actions > button { min-height: 32px; padding: 0 9px; font-size: 0.74rem; }
+      .brand-row .toolbar-actions { flex-wrap: nowrap; justify-content: flex-end; gap: 6px; }
+      .brand-row .toolbar-actions > button { height: 32px; min-height: 32px; padding: 0 10px; font-size: 0.74rem; }
       .brand h1 { font-size: 1.05rem; }
-      button#logoutBtn { padding: 0 8px; }
+      button#logoutBtn { padding: 0 10px; }
       .sync-bar .meta-pill #statusText { max-width: min(52vw, 220px); }
       .wrap { padding-bottom: calc(28px + var(--sync-bar-h) + var(--safe-bottom)) !important; }
     }
@@ -1574,7 +1601,15 @@
         <div class="sub" id="sumDailySub">相对上一 T0 收盘市值</div>
       </div>
       <div class="summary-card">
-        <div class="label">总成本</div>
+        <div class="summary-card-head">
+          <div class="label">总成本</div>
+          <div class="summary-mkt-filter" role="tablist" aria-label="总成本市场">
+            <button type="button" class="chip active" role="tab" aria-selected="true" data-cost-market="all">全部</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-cost-market="CNY">A股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-cost-market="HKD">港股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-cost-market="USD">美股</button>
+          </div>
+        </div>
         <div class="tri" aria-label="总成本三币种">
           <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumCost">加载中</span></div>
           <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumCostHkd">HK$—</span></div>
@@ -1583,7 +1618,15 @@
         <div class="sub" id="sumCostSub">USD · HKD · CNY</div>
       </div>
       <div class="summary-card">
-        <div class="label">总市值</div>
+        <div class="summary-card-head">
+          <div class="label">总市值</div>
+          <div class="summary-mkt-filter" role="tablist" aria-label="总市值市场">
+            <button type="button" class="chip active" role="tab" aria-selected="true" data-mv-market="all">全部</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-mv-market="CNY">A股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-mv-market="HKD">港股</button>
+            <button type="button" class="chip" role="tab" aria-selected="false" data-mv-market="USD">美股</button>
+          </div>
+        </div>
         <div class="tri" aria-label="总市值三币种">
           <div class="tri-row"><span class="tri-ccy">USD</span><span class="tri-v" id="sumMv">加载中</span></div>
           <div class="tri-row"><span class="tri-ccy">HKD</span><span class="tri-v" id="sumMvHkd">HK$—</span></div>
@@ -2731,34 +2774,37 @@
     /* 汇总卡市场筛选，与持仓列表的市场芯片独立。币种标签与列表一致：CNY/HKD/USD。 */
     const SUMMARY_MKT_KEY = "portfolio-summary-market-filters";
     const SUMMARY_MKT_VALUES = ["all", "CNY", "HKD", "USD"];
-    const summaryMkt = { pnl: "all", daily: "all" };
+    const summaryMkt = { pnl: "all", daily: "all", cost: "all", mv: "all" };
+    const SUMMARY_MKT_ATTRS = [
+      ["pnl", "data-pnl-market"],
+      ["daily", "data-daily-market"],
+      ["cost", "data-cost-market"],
+      ["mv", "data-mv-market"],
+    ];
 
     function loadSummaryMkt() {
       try {
         const raw = JSON.parse(localStorage.getItem(SUMMARY_MKT_KEY) || "null");
         if (!raw || typeof raw !== "object") return;
-        if (SUMMARY_MKT_VALUES.includes(raw.pnl)) summaryMkt.pnl = raw.pnl;
-        if (SUMMARY_MKT_VALUES.includes(raw.daily)) summaryMkt.daily = raw.daily;
+        SUMMARY_MKT_ATTRS.forEach(([key]) => {
+          if (SUMMARY_MKT_VALUES.includes(raw[key])) summaryMkt[key] = raw[key];
+        });
       } catch (e) { /* keep defaults */ }
     }
     function saveSummaryMkt() {
       try {
-        localStorage.setItem(SUMMARY_MKT_KEY, JSON.stringify({
-          pnl: summaryMkt.pnl,
-          daily: summaryMkt.daily,
-        }));
+        const payload = {};
+        SUMMARY_MKT_ATTRS.forEach(([key]) => { payload[key] = summaryMkt[key]; });
+        localStorage.setItem(SUMMARY_MKT_KEY, JSON.stringify(payload));
       } catch (e) { /* ignore */ }
     }
     function syncSummaryMktChips() {
-      document.querySelectorAll("[data-pnl-market]").forEach((b) => {
-        const on = (b.getAttribute("data-pnl-market") || "all") === summaryMkt.pnl;
-        b.classList.toggle("active", on);
-        b.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      document.querySelectorAll("[data-daily-market]").forEach((b) => {
-        const on = (b.getAttribute("data-daily-market") || "all") === summaryMkt.daily;
-        b.classList.toggle("active", on);
-        b.setAttribute("aria-selected", on ? "true" : "false");
+      SUMMARY_MKT_ATTRS.forEach(([key, attr]) => {
+        document.querySelectorAll("[" + attr + "]").forEach((b) => {
+          const on = (b.getAttribute(attr) || "all") === summaryMkt[key];
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
       });
     }
     loadSummaryMkt();
@@ -3234,16 +3280,40 @@
       subEl.textContent = "等待行情与 T0 快照";
     }
 
+    function paintScopedMoney(usdId, hkdId, cnyId, subId, list, agg, usdAmount, market, okText) {
+      const scope = summaryScopeText(market);
+      const withScope = (text) => (scope ? text + " · " + scope : text);
+      if (!list.length || !agg.priced) {
+        el(usdId).textContent = !list.length || quotesSettled ? "—" : "加载中";
+        el(hkdId).textContent = "HK$—";
+        el(cnyId).textContent = "¥—";
+        el(subId).textContent = !list.length
+          ? withScope("暂无持仓")
+          : (quotesSettled ? withScope("暂无报价") : "—");
+        return;
+      }
+      const tri = fmtTriCurrency(usdAmount);
+      el(usdId).textContent = tri.usd;
+      el(hkdId).textContent = tri.hkd;
+      el(cnyId).textContent = tri.cny;
+      let sub = okText;
+      if (agg.missingFx) sub = "部分标的因缺汇率未折算";
+      else if (agg.missingQuote.length) sub = "缺报价标的未计入";
+      el(subId).textContent = withScope(sub);
+    }
+
     function renderSummary() {
 
       const fxNote = el("fxNote");
       const hkdRate = lastFx && lastFx.hkd != null ? lastFx.hkd : null;
       const cnyRate = lastFx && lastFx.cny != null ? lastFx.cny : null;
 
-      const agg = aggregateUsd(filteredHoldings());
-      const { totalCostUsd, totalMvUsd, allReady, missingFx, skipped, missingQuote, badCcy } = agg;
+      const costList = holdingsForCard(summaryMkt.cost);
+      const mvList = holdingsForCard(summaryMkt.mv);
+      const costAgg = aggregateUsd(costList);
+      const mvAgg = aggregateUsd(mvList);
 
-      if (!allReady && Object.keys(lastGood).length === 0) {
+      if (Object.keys(lastGood).length === 0) {
         el("sumCost").textContent = "加载中";
         el("sumMv").textContent = "加载中";
         el("sumCostHkd").textContent = "HK$—";
@@ -3263,48 +3333,44 @@
         return;
       }
 
-      const costTri = fmtTriCurrency(totalCostUsd);
-      const mvTri = fmtTriCurrency(totalMvUsd);
-      el("sumCost").textContent = costTri.usd;
-      el("sumCostHkd").textContent = costTri.hkd;
-      el("sumCostCny").textContent = costTri.cny;
-      el("sumMv").textContent = mvTri.usd;
-      el("sumMvHkd").textContent = mvTri.hkd;
-      el("sumMvCny").textContent = mvTri.cny;
+      paintScopedMoney("sumCost", "sumCostHkd", "sumCostCny", "sumCostSub", costList, costAgg, costAgg.totalCostUsd, summaryMkt.cost, "USD · HKD · CNY");
+      paintScopedMoney("sumMv", "sumMvHkd", "sumMvCny", "sumMvSub", mvList, mvAgg, mvAgg.totalMvUsd, summaryMkt.mv, "实时报价 · 三币种");
       paintFloatingPnl();
 
       el("sumFxHkd").textContent = hkdRate != null ? fmtNum(hkdRate, 4) : "—";
       el("sumFxCny").textContent = cnyRate != null ? fmtNum(cnyRate, 4) : "—";
 
-      if (missingFx) {
+      const noteParts = [];
+      if (costAgg.missingFx || mvAgg.missingFx) {
         const parts = [];
-        if (skipped.HKD.mv) parts.push(`港股 ${fmtMoney(skipped.HKD.mv, "HKD")}`);
-        if (skipped.CNY.mv) parts.push(`A股 ${fmtMoney(skipped.CNY.mv, "CNY")}`);
-        el("sumCostSub").textContent = "部分标的因缺汇率未折算";
-        el("sumMvSub").textContent = parts.length ? `未计入：${parts.join(" · ")}` : "USD · HKD · CNY";
+        const skipped = {
+          HKD: (costAgg.skipped.HKD.mv || 0) + (mvAgg.skipped.HKD.mv || 0),
+          CNY: (costAgg.skipped.CNY.mv || 0) + (mvAgg.skipped.CNY.mv || 0),
+        };
+        if (skipped.HKD) parts.push("港股");
+        if (skipped.CNY) parts.push("A股");
+        noteParts.push(
+          "部分汇率暂不可用：对应卡片合计仅含已折算标的" +
+          (parts.length ? `（${parts.join("、")}）` : "") +
+          "。"
+        );
+      }
+      const missingNames = [...new Set(costAgg.missingQuote.concat(mvAgg.missingQuote))];
+      if (missingNames.length) {
+        noteParts.push(`${missingNames.length} 只缺报价，未计入对应合计：${missingNames.join("、")}`);
+      }
+      const badNames = [...new Set(costAgg.badCcy.concat(mvAgg.badCcy))];
+      if (badNames.length) {
+        noteParts.push(`${badNames.length} 只手动持仓币种与市场不符/未选，暂未计入合计，请编辑修正：${badNames.join("、")}`);
+      }
+      if (noteParts.length) {
         fxNote.style.display = "block";
         fxNote.className = "fx-note warn";
-        fxNote.textContent = "部分汇率暂不可用：组合合计仅含已折算标的；未折算持仓按原币种单独显示。";
+        fxNote.textContent = noteParts.join(" ");
       } else {
-        el("sumCostSub").textContent = "USD · HKD · CNY";
-        el("sumMvSub").textContent = "实时报价 · 三币种";
         fxNote.style.display = "none";
         fxNote.className = "fx-note";
         fxNote.textContent = "";
-      }
-      if (missingQuote.length) {
-        const msg = `${missingQuote.length} 只缺报价，成本与市值均未计入合计：${missingQuote.join("、")}`;
-        el("sumCostSub").textContent = "缺报价标的未计入";
-        fxNote.style.display = "block";
-        fxNote.className = "fx-note warn";
-        fxNote.textContent = (missingFx ? fxNote.textContent + " " : "") + msg;
-      }
-      if (badCcy.length) {
-        const msg = `${badCcy.length} 只手动持仓币种与市场不符/未选，暂未计入合计，请编辑修正：${badCcy.join("、")}`;
-        const prev = fxNote.style.display === "block" ? fxNote.textContent + " " : "";
-        fxNote.style.display = "block";
-        fxNote.className = "fx-note warn";
-        fxNote.textContent = prev + msg;
       }
       renderDailyPnl();
       syncStickyPnl();
@@ -4088,22 +4154,15 @@
         renderSummary();
       });
     });
-    document.querySelectorAll("[data-pnl-market]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const next = btn.getAttribute("data-pnl-market") || "all";
-        summaryMkt.pnl = SUMMARY_MKT_VALUES.includes(next) ? next : "all";
-        saveSummaryMkt();
-        syncSummaryMktChips();
-        renderSummary();
-      });
-    });
-    document.querySelectorAll("[data-daily-market]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const next = btn.getAttribute("data-daily-market") || "all";
-        summaryMkt.daily = SUMMARY_MKT_VALUES.includes(next) ? next : "all";
-        saveSummaryMkt();
-        syncSummaryMktChips();
-        renderSummary();
+    SUMMARY_MKT_ATTRS.forEach(([key, attr]) => {
+      document.querySelectorAll("[" + attr + "]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const next = btn.getAttribute(attr) || "all";
+          summaryMkt[key] = SUMMARY_MKT_VALUES.includes(next) ? next : "all";
+          saveSummaryMkt();
+          syncSummaryMktChips();
+          renderSummary();
+        });
       });
     });
     el("sortSelect").addEventListener("change", (e) => {
