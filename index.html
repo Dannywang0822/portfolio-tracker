@@ -1437,6 +1437,7 @@
           </div>
           <div class="auth-links" id="authLinksRow" hidden>
             <button type="button" id="forgotLink">忘记密码？</button>
+            <button type="button" id="registerLink" hidden>注册新账号</button>
           </div>
           <p class="login-error" id="loginError" role="alert"></p>
           <button type="submit" id="loginSubmit">登录</button>
@@ -1454,6 +1455,33 @@
           <p class="login-error" id="forgotError" role="alert"></p>
           <p class="auth-msg info" id="forgotInfo" role="status"></p>
           <button type="submit" id="forgotSubmit">发送重置邮件</button>
+        </form>
+      </div>
+
+      <div class="auth-panel" id="panelRegister" data-auth-panel="register" hidden>
+        <button type="button" class="auth-back" id="registerBack">← 返回登录</button>
+        <p class="auth-panel-title">注册云端账号</p>
+        <form id="registerForm" autocomplete="on">
+          <div class="login-field">
+            <label for="regUser">用户名</label>
+            <input id="regUser" name="username" type="text" autocomplete="username" required placeholder="字母开头，4–32 位" />
+          </div>
+          <div class="login-field">
+            <label for="regEmail">邮箱（接收验证码）</label>
+            <input id="regEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          </div>
+          <div class="login-field">
+            <label for="regPass">密码</label>
+            <input id="regPass" name="new-password" type="password" autocomplete="new-password" required placeholder="至少 8 位，含字母和数字" />
+          </div>
+          <div class="login-field" id="regCodeField" hidden>
+            <label for="regCode">邮箱验证码</label>
+            <input id="regCode" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6 位验证码" />
+          </div>
+          <p class="login-note">云开发密码要求：至少 8 位，且同时包含字母和数字。</p>
+          <p class="login-error" id="registerError" role="alert"></p>
+          <p class="auth-msg info" id="registerInfo" role="status"></p>
+          <button type="submit" id="registerSubmit">发送验证码</button>
         </form>
       </div>
 
@@ -1700,6 +1728,9 @@
   <script src="./firebase-config.js"></script>
   -->
   <script src="./auth.js"></script>
+  <!-- 腾讯云开发：仅在 *.tcloudbaseapp.com（或 ?cloud=tcb）启用，SDK 按需加载 ./vendor/cloudbase.full.js -->
+  <script src="./cloudbase-config.js"></script>
+  <script src="./cloudbase-auth.js"></script>
   <script src="./market-hours.js"></script>
   <script>
     const HOLDINGS = [
@@ -3512,8 +3543,13 @@
       node.classList.toggle("show", !!msg);
     }
 
+    function isTcb() {
+      return !!(window.PortfolioAuth && PortfolioAuth.backend === "tcb");
+    }
+
     function refreshAuthModeUI() {
       const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
+      const tcb = isTcb();
       const pill = el("authModePill");
       const note = el("authModeNote");
       const label = el("loginUserLabel");
@@ -3534,8 +3570,22 @@
           ? "授权账号登录后，持仓会实时同步到各设备"
           : "本机登录 · 持仓保存在此设备";
       }
-      if (label) label.textContent = cloud ? "邮箱" : "用户名";
-      if (userInp) {
+      if (tcb) {
+        if (note) note.textContent = "腾讯云开发已接通 · 用户名密码登录 · 持仓云端同步，本机缓存可离线";
+        if (sub) sub.textContent = "登录后持仓在各设备间同步";
+      }
+      const reg = el("registerLink");
+      if (reg) reg.hidden = !tcb;
+      const fl = el("forgotLink");
+      if (fl) fl.hidden = tcb;
+      if (label) label.textContent = cloud && !tcb ? "邮箱" : "用户名";
+      if (userInp && tcb) {
+        userInp.type = "text";
+        userInp.inputMode = "text";
+        userInp.name = "username";
+        userInp.placeholder = "用户名";
+        if (userInp.value === "danny") userInp.value = (PortfolioAuth.currentEmail && PortfolioAuth.currentEmail()) || "";
+      } else if (userInp) {
         if (cloud) {
           userInp.type = "email";
           userInp.inputMode = "email";
@@ -3556,7 +3606,7 @@
     }
 
     function switchAuthPanel(name) {
-      const panels = ["login", "forgot"];
+      const panels = ["login", "forgot", "register"];
       panels.forEach((p) => {
         const node = document.querySelector(`[data-auth-panel="${p}"]`);
         if (node) node.hidden = p !== name;
@@ -3569,7 +3619,7 @@
       if (name === "login") {
         const u = el("loginEmail");
         const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
-        if (u && !u.value) {
+        if (u && !u.value && !isTcb()) {
           u.value = cloud
             ? ((window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com")
             : "danny";
@@ -3584,6 +3634,54 @@
 
     el("forgotLink")?.addEventListener("click", () => switchAuthPanel("forgot"));
     el("forgotBack")?.addEventListener("click", () => switchAuthPanel("login"));
+    el("registerLink")?.addEventListener("click", () => switchAuthPanel("register"));
+    el("registerBack")?.addEventListener("click", () => {
+      el("regCodeField").hidden = true;
+      el("registerSubmit").textContent = "发送验证码";
+      switchAuthPanel("login");
+    });
+    el("registerForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errNode = el("registerError");
+      const info = el("registerInfo");
+      showAuthError(errNode, "");
+      if (info) { info.textContent = ""; info.classList.remove("show"); }
+      const codeStep = !el("regCodeField").hidden;
+      const idle = codeStep ? "完成注册" : "发送验证码";
+      if (!codeStep) {
+        const pe = PortfolioAuth.validatePassword ? PortfolioAuth.validatePassword(el("regPass").value) : "";
+        if (pe) { showAuthError(errNode, pe); return; }
+      }
+      setAuthBusy(el("registerForm"), true, idle);
+      try {
+        if (!codeStep) {
+          const r = await PortfolioAuth.signUp({
+            username: el("regUser").value,
+            email: el("regEmail").value,
+            password: el("regPass").value,
+          });
+          if (r && r.needCode) {
+            setAuthBusy(el("registerForm"), false, "完成注册");
+            el("regCodeField").hidden = false;
+            el("registerSubmit").textContent = "完成注册";
+            if (info) { info.textContent = "验证码已发送至 " + r.email; info.classList.add("show"); }
+            el("regCode").focus();
+            return;
+          }
+          if (r && r.uid) { el("regPass").value = ""; showApp(); return; }
+          if (info) { info.textContent = "注册成功，请返回登录"; info.classList.add("show"); }
+        } else {
+          await PortfolioAuth.verifySignUp(el("regCode").value);
+          el("regPass").value = "";
+          el("regCode").value = "";
+          showApp();
+          return;
+        }
+      } catch (err) {
+        showAuthError(errNode, err.message || "注册失败");
+      }
+      setAuthBusy(el("registerForm"), false, el("regCodeField").hidden ? "发送验证码" : "完成注册");
+    });
 
     function resetPasswordVisibility() {
       document.querySelectorAll("#loginGate .pw-wrap input[type='text']").forEach((inp) => {
@@ -3688,7 +3786,7 @@
       const pass = el("loginPass").value;
       showAuthError(el("loginError"), "");
       const cloud = window.PortfolioAuth && PortfolioAuth.isCloudReady();
-      if (cloud) {
+      if (cloud && !isTcb()) {
         const allowed = (window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com";
         if (email.toLowerCase() !== allowed.toLowerCase()) {
           showAuthError(el("loginError"), "仅允许授权账号登录（" + allowed + "）");

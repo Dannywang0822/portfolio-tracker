@@ -65,3 +65,32 @@ python3 scripts/fetch_quotes.py
 python3 scripts/fetch_quotes.py
 python3 scripts/snapshot_daily_pnl.py
 ```
+
+## 腾讯云开发（CloudBase）部署 · 国内云端登录/同步
+
+- 环境：`english-little-steps-d0a2b84764b`（ap-shanghai），配置见 `cloudbase-config.js`（只含公开 envId，无密钥）。
+- SDK：已本地化为 `vendor/cloudbase.full.js`（来自 static.cloudbase.net），仅在云模式下按需加载。
+- **云模式检测**：`location.hostname` 以 `tcloudbaseapp.com` 结尾时启用；也可用 `?cloud=tcb` 强制开启（存于 localStorage `portfolio-cloud-mode`，`?cloud=off` 关闭）。
+  GitHub Pages 等其他域名保持原本机门禁（danny / 123），行为不变。
+- 登录：用户名 + 密码（控制台需开启「用户名密码登录」）。注册需邮箱验证码（需开启邮箱登录）；也可在 控制台 → 身份认证 → 用户管理 直接新建用户。
+  云开发密码至少 8 位，且同时含字母和数字。
+- 数据：集合 **`portfolio_holdings`**，每个用户一个文档，`_id = 用户 uid`，字段 `{ holdings: [...], updatedAt }`。
+  localStorage 仍是主数据/离线缓存：登录时拉取云端（云端为空则用本机数据初始化），每次增删改后整表推送，并用 `watch` 实时接收其他设备的修改。
+
+### 安全规则（推荐，在 控制台 → 文档型数据库 → portfolio_holdings → 权限设置 → 自定义安全规则）
+
+```json
+{
+  "read": "doc._openid == auth.openid || doc._id == auth.uid",
+  "write": "doc._openid == auth.openid || doc._id == auth.uid"
+}
+```
+
+即仅文档所有者可读写（Web SDK 写入时会自动带 `_openid` = 当前用户）。简单起见也可选预设「仅创建者可读写」。
+
+### 发布到静态网站托管
+
+- 控制台上传：云开发控制台 → 静态网站托管 → 文件管理 → 上传 `portfolio-tracker-cloudbase.zip` 解压后的全部文件到根目录。
+- CLI：`npm i -g @cloudbase/cli`，`tcb login --apiKeyId <SecretId> --apiKey <SecretKey>`（或浏览器扫码 `tcb login`），
+  然后 `tcb hosting deploy ./ -e english-little-steps-d0a2b84764b`。
+- 访问：`https://english-little-steps-d0a2b84764b-1408940790.tcloudbaseapp.com/`
