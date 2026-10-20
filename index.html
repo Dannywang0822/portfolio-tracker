@@ -1996,6 +1996,7 @@
       },
     ];
 
+    try { window.__PORTFOLIO_BUILTIN_HOLDINGS__ = HOLDINGS; } catch (e) { /* ignore */ }
     const CUSTOM_KEY = "portfolio-custom-holdings";
     let quotesSettled = false;
     const MARKET_FROM_CURRENCY = { USD: "us", HKD: "hk", CNY: "cn" };

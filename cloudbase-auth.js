@@ -129,7 +129,7 @@
   function pushNow() {
     var list = readLocal().map(normalizeRow);
     return docRef().set({ holdings: list, updatedAt: Date.now() }).then(function (res) {
-      if (res && res.code) throw new Error(res.message || res.code);
+      if (res && res.code) { var e = new Error(res.message || res.code); e.code = res.code; throw e; }
       _cloudHoldings = list;
       return true;
     });
@@ -137,7 +137,13 @@
   function schedulePush() {
     return new Promise(function (resolve, reject) {
       clearTimeout(_pushTimer);
-      _pushTimer = setTimeout(function () { pushNow().then(resolve, reject); }, 400);
+      _pushTimer = setTimeout(function () {
+        pushNow().then(function (v) { setStatus("已保存到云端"); resolve(v); }, function (err) {
+          console.warn("[PortfolioAuth/tcb] push failed", err);
+          setStatus("保存到云端失败：" + cloudErrText(err) + "（已存本机）", "error");
+          reject(err);
+        });
+      }, 400);
     });
   }
 
@@ -146,18 +152,74 @@
     _cloudHoldings = [];
   }
 
+  /* ---- 同步状态（中文，显示在页面右下角，错误不再被吞掉） ---- */
+  var _statusEl = null, _statusTimer = null;
+  function setStatus(text, kind) {
+    try {
+      global.__PORTFOLIO_SYNC_STATUS__ = { text: text, kind: kind || "info", at: Date.now() };
+      if (!global.document || !global.document.body) return;
+      if (!_statusEl) {
+        _statusEl = global.document.createElement("div");
+        _statusEl.id = "cloudSyncStatus";
+        _statusEl.setAttribute("role", "status");
+        _statusEl.style.cssText = "position:fixed;right:10px;bottom:10px;z-index:9999;max-width:80vw;padding:6px 10px;border-radius:8px;font-size:12px;line-height:1.4;background:rgba(0,0,0,.75);color:#fff;pointer-events:none;transition:opacity .3s";
+        global.document.body.appendChild(_statusEl);
+      }
+      _statusEl.textContent = text;
+      _statusEl.style.background = kind === "error" ? "rgba(180,30,30,.92)" : "rgba(0,0,0,.75)";
+      _statusEl.style.opacity = "1";
+      clearTimeout(_statusTimer);
+      if (kind !== "error") _statusTimer = setTimeout(function () { if (_statusEl) _statusEl.style.opacity = "0"; }, 4000);
+    } catch (e) { /* ignore */ }
+  }
+  function cloudErrText(err) {
+    var code = (err && (err.code || err.errCode)) || "";
+    var m = (err && (err.message || err.errMsg)) || String(err || "");
+    if (/PERMISSION|permission|权限/i.test(code + m)) return "无权限写入云端（请检查集合权限）";
+    if (/network|timeout|Failed to fetch/i.test(m)) return "网络异常";
+    return (code ? code + " " : "") + m;
+  }
+  function isNotFound(err) {
+    var s = (err && (err.code || "")) + " " + (err && err.message || "");
+    return /DOCUMENT_NOT_FOUND|not.?found|不存在/i.test(s);
+  }
+
+  /** First-time seed: built-in holdings (as override rows) + this device's custom rows. */
+  function seedList() {
+    var custom = readLocal();
+    var ids = {};
+    custom.forEach(function (h) { ids[String(h.id)] = true; });
+    var builtins = Array.isArray(global.__PORTFOLIO_BUILTIN_HOLDINGS__) ? global.__PORTFOLIO_BUILTIN_HOLDINGS__ : [];
+    var rows = builtins.filter(function (b) { return b && b.id && !ids[String(b.id)]; })
+      .map(function (b) { var r = normalizeRow(b); r.override = true; return r; });
+    return rows.concat(custom.map(normalizeRow));
+  }
+
   function startSync() {
     stopSync();
     var ref = docRef();
+    setStatus("正在同步云端持仓…");
     return ref.get().then(function (res) {
-      var doc = res && res.data && res.data[0];
-      if (doc && Array.isArray(doc.holdings)) {
+      if (res && res.code) { var e = new Error(res.message || res.code); e.code = res.code; throw e; }
+      return (res && res.data && res.data[0]) || null;
+    }, function (err) {
+      if (isNotFound(err)) return null; // v2 SDK: 文档不存在会直接 reject
+      throw err;
+    }).then(function (doc) {
+      if (doc && Array.isArray(doc.holdings) && doc.holdings.length) {
         applyRemote(doc.holdings);
-      } else if (readLocal().length) {
-        return pushNow(); // first login on this account: seed cloud from this device
+        setStatus("已从云端同步 " + doc.holdings.length + " 条持仓");
+        return;
       }
+      var list = seedList();
+      writeLocal(list);
+      return pushNow().then(function () {
+        notify();
+        setStatus("云端为空，已上传本机 " + list.length + " 条持仓");
+      });
     }).catch(function (err) {
-      console.warn("[PortfolioAuth/tcb] pull failed, using local cache", err);
+      console.warn("[PortfolioAuth/tcb] sync failed, using local cache", err);
+      setStatus("云端同步失败：" + cloudErrText(err) + "（暂用本机数据）", "error");
     }).then(function () {
       try {
         _watcher = ref.watch({
@@ -168,7 +230,7 @@
               if (remote !== JSON.stringify(readLocal().map(normalizeRow))) applyRemote(d.holdings);
             }
           },
-          onError: function (err) { console.warn("[PortfolioAuth/tcb] watch error", err); },
+          onError: function (err) { console.warn("[PortfolioAuth/tcb] watch error", err); setStatus("云端实时同步中断：" + cloudErrText(err), "error"); },
         });
       } catch (e) { console.warn("[PortfolioAuth/tcb] watch unavailable", e); }
       return _cloudHoldings;
