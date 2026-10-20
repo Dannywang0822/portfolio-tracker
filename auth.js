@@ -408,7 +408,7 @@
 
   function resetPassword(email) {
     if (!isCloudReady()) {
-      return Promise.reject(new Error("本地门禁不支持邮箱重置，请使用用户名 danny 与既定密码"));
+      return Promise.reject(new Error("本地门禁不支持邮箱重置，请使用用户名与既定密码"));
     }
     var raw = String(email || "").trim();
     if (!raw) {

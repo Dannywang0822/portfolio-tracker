@@ -1478,12 +1478,12 @@
         <form id="loginForm" autocomplete="on">
           <div class="login-field">
             <label for="loginEmail" id="loginUserLabel">用户名</label>
-            <input id="loginEmail" name="username" type="text" inputmode="text" autocomplete="username" required autofocus value="danny" placeholder="danny" />
+            <input id="loginEmail" name="username" type="text" inputmode="text" autocomplete="username" required autofocus value="" placeholder="用户名" />
           </div>
           <div class="login-field">
             <label for="loginPass">密码</label>
             <div class="pw-wrap">
-              <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+              <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="密码" />
               <button type="button" class="pw-toggle" id="loginPassToggle" aria-label="显示密码" aria-pressed="false" title="显示密码"><svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
             </div>
           </div>
@@ -3852,7 +3852,7 @@
       if (note) {
         note.textContent = cloud
           ? "Firebase 已接通 · 仅授权账号可登录 · 已关闭公开注册 · 持仓实时同步"
-          : "本机门禁（danny / 123）· 持仓仅保存在此设备，不同步到其他手机/电脑";
+          : "本机登录 · 持仓仅保存在此设备，不同步到其他手机/电脑";
       }
       const sub = el("loginSub");
       if (sub) {
@@ -3888,8 +3888,8 @@
           userInp.type = "text";
           userInp.inputMode = "text";
           userInp.name = "username";
-          userInp.placeholder = "danny";
-          if (!userInp.value || userInp.value.includes("@")) userInp.value = "danny";
+          userInp.placeholder = "用户名";
+          if (userInp.value.includes("@")) userInp.value = "";
         }
       }
       if (links) links.hidden = !cloud;
@@ -3912,7 +3912,7 @@
         if (u && !u.value && !isTcb()) {
           u.value = cloud
             ? ((window.PortfolioAuth && PortfolioAuth.allowedEmail && PortfolioAuth.allowedEmail()) || "oppodanny@gmail.com")
-            : "danny";
+            : "";
         }
         el("loginPass")?.focus() || u?.focus();
       } else if (name === "forgot") {
