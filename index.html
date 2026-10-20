@@ -2494,19 +2494,57 @@
     }
 
 
-    async function loadStaticQuotes() {
+    // 云端模式（*.tcloudbaseapp.com）：静态托管里的 data/*.json 不会自动更新，
+    // 优先从 GitHub 远端拉最新，失败/超时(5s)再退回托管快照。
+    const REMOTE_DATA_SOURCES = [
+      { label: "GitHub 镜像", base: "https://dannywang0822.github.io/portfolio-tracker/data/" },
+      { label: "jsDelivr 镜像", base: "https://fastly.jsdelivr.net/gh/Dannywang0822/portfolio-tracker@main/data/" },
+      { label: "GitHub Raw", base: "https://raw.githubusercontent.com/Dannywang0822/portfolio-tracker/main/data/" },
+    ];
+    let lastDataSourceLabel = "";
+    function isCloudHosted() {
+      return /(^|\.)tcloudbaseapp\.com$/i.test(location.hostname || "");
+    }
+    async function fetchJsonTimeout(url, ms) {
+      const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctl ? setTimeout(() => ctl.abort(), ms) : null;
       try {
-        const res = await fetch("./data/quotes.json?t=" + Date.now(), {
+        const res = await fetch(url, {
           cache: "no-store",
+          mode: "cors",
+          credentials: "omit",
           headers: { Accept: "application/json" },
+          signal: ctl ? ctl.signal : undefined,
         });
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data || !data.quotes) return null;
-        return data;
-      } catch (e) {
-        return null;
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+      } finally {
+        if (timer) clearTimeout(timer);
       }
+    }
+    /** 返回 {data, label}；云端模式先试远端，否则/失败用同源 ./data/。 */
+    async function loadDataJson(name, validate) {
+      const bust = "?t=" + Date.now();
+      if (isCloudHosted()) {
+        for (const src of REMOTE_DATA_SOURCES) {
+          try {
+            const data = await fetchJsonTimeout(src.base + name + bust, 5000);
+            if (!validate || validate(data)) return { data, label: src.label };
+          } catch (e) { /* try next */ }
+        }
+      }
+      try {
+        const data = await fetchJsonTimeout("./data/" + name + bust, 8000);
+        if (!validate || validate(data)) return { data, label: isCloudHosted() ? "云端快照" : "" };
+      } catch (e) {}
+      return null;
+    }
+
+    async function loadStaticQuotes() {
+      const r = await loadDataJson("quotes.json", (d) => d && d.quotes);
+      if (!r) return null;
+      lastDataSourceLabel = r.label;
+      return r.data;
     }
 
     function lookupQuoteRow(qmap, yahoo, currency) {
@@ -2846,16 +2884,8 @@
     let dailyPnlData = null;
 
     async function loadDailyPnl() {
-      try {
-        const res = await fetch("./data/daily-pnl.json?t=" + Date.now(), {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        dailyPnlData = await res.json();
-      } catch (err) {
-        dailyPnlData = null;
-      }
+      const r = await loadDataJson("daily-pnl.json", (d) => d && typeof d === "object");
+      dailyPnlData = r ? r.data : null;
     }
 
     /** Live portfolio MV in USD (all holdings, same rules as summary). */
@@ -3139,10 +3169,10 @@
           if (errors.length) {
             setStatus(
               "ok",
-              `quotes.json 已更新；手动标的暂无现价：${errors.join("、")}（可展开卡片点「加入定时行情」）`
+              `${lastDataSourceLabel ? "行情来自 " + lastDataSourceLabel : "quotes.json 已更新"}；手动标的暂无现价：${errors.join("、")}（可展开卡片点「加入定时行情」）`
             );
           } else {
-            setStatus("ok", "已从 quotes.json 更新（Actions 约每 15 分钟）");
+            setStatus("ok", lastDataSourceLabel ? `行情来自 ${lastDataSourceLabel}（${lastDataSourceLabel === "云端快照" ? "远端不可用，显示托管快照" : "约每 15 分钟更新"}）` : "已从 quotes.json 更新（Actions 约每 15 分钟）");
           }
           fetching = false;
           el("refreshBtn").disabled = false;

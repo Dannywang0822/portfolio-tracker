@@ -2,7 +2,7 @@
  * - 壳资源：HTML/JS 网络优先（避免旧壳卡住登录门控），其余缓存优先
  * - 行情请求：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v40";
+const CACHE_NAME = "portfolio-h5-shell-v41";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -80,7 +80,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // 跨域（GitHub 镜像 / jsDelivr / raw）不经 SW 缓存，直接走网络
   if (url.origin !== self.location.origin) return;
+
+  // 同源 data/*.json：网络直连不缓存，失败才用旧缓存
+  if (/\/data\/[^/]+\.json$/.test(url.pathname)) {
+    event.respondWith(fetch(req, { cache: "no-store" }).catch(() => caches.match(req, { ignoreSearch: true })));
+    return;
+  }
 
   // Auth / shell HTML+JS: network-first so login-gate fixes reach phones quickly
   if (isAuthCritical(url)) {

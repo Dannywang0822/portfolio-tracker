@@ -1,0 +1,48 @@
+# 把 data/*.json 部署到腾讯云开发静态托管（english-little-steps-d0a2b84764b）。
+# 默认不生效：仓库未配置 TCB_SECRET_ID / TCB_SECRET_KEY 时，部署步骤全部跳过。
+# 需要的 Secrets（Settings → Secrets and variables → Actions）：
+#   TCB_SECRET_ID / TCB_SECRET_KEY : 腾讯云 CAM 子用户 API 密钥（建议仅授予 TCB 静态托管权限）
+#   TCB_ENV_ID (可选)              : 默认 english-little-steps-d0a2b84764b
+name: Deploy data to CloudBase hosting
+
+on:
+  workflow_run:
+    workflows: ["Update quotes", "Daily P&L snapshot (T0)"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: cloudbase-data
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_TCB: ${{ secrets.TCB_SECRET_ID != '' && secrets.TCB_SECRET_KEY != '' }}
+      TCB_ENV_ID: ${{ secrets.TCB_ENV_ID || 'english-little-steps-d0a2b84764b' }}
+    steps:
+      - name: Secrets check
+        run: |
+          if [ "$HAS_TCB" != "true" ]; then
+            echo "::notice::TCB_SECRET_ID/TCB_SECRET_KEY 未配置，跳过 CloudBase 部署"
+          fi
+      - uses: actions/checkout@v4
+        if: env.HAS_TCB == 'true'
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        if: env.HAS_TCB == 'true'
+        with:
+          node-version: 20
+      - name: Deploy data/*.json
+        if: env.HAS_TCB == 'true'
+        env:
+          TCB_SECRET_ID: ${{ secrets.TCB_SECRET_ID }}
+          TCB_SECRET_KEY: ${{ secrets.TCB_SECRET_KEY }}
+        run: |
+          npm i -g @cloudbase/cli@2
+          tcb login --apiKeyId "$TCB_SECRET_ID" --apiKey "$TCB_SECRET_KEY"
+          for f in quotes.json daily-pnl.json extra-symbols.json; do
+            [ -f "data/$f" ] && tcb hosting deploy "data/$f" "data/$f" -e "$TCB_ENV_ID"
+          done
