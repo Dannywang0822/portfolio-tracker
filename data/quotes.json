@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-21T14:05:30.490152+08:00",
+  "updatedAt": "2026-10-21T19:56:42.225699+08:00",
   "quotes": {
     "PDD": {
       "price": 81.63,
@@ -32,51 +32,51 @@
       "currency": "USD"
     },
     "0700.HK": {
-      "price": 400.8,
+      "price": 393.8,
       "previousClose": 410.4,
-      "changePct": -2.339,
+      "changePct": -4.045,
       "currency": "HKD"
     },
     "0981.HK": {
-      "price": 50.55,
+      "price": 49.96,
       "previousClose": 51.2,
-      "changePct": -1.27,
+      "changePct": -2.422,
       "currency": "HKD"
     },
     "1519.HK": {
-      "price": 8.855,
+      "price": 8.905,
       "previousClose": 9.2,
-      "changePct": -3.75,
+      "changePct": -3.207,
       "currency": "HKD"
     },
     "9992.HK": {
-      "price": 130.8,
+      "price": 129.8,
       "previousClose": 136.4,
-      "changePct": -4.106,
+      "changePct": -4.839,
       "currency": "HKD"
     },
     "1119.HK": {
-      "price": 0.335,
+      "price": 0.345,
       "previousClose": 0.34,
-      "changePct": -1.471,
+      "changePct": 1.471,
       "currency": "HKD"
     },
     "000009.SZ": {
-      "price": 6.49,
+      "price": 6.48,
       "previousClose": 6.57,
-      "changePct": -1.218,
+      "changePct": -1.37,
       "currency": "CNY"
     },
     "002501.SZ": {
-      "price": 1.27,
+      "price": 1.28,
       "previousClose": 1.27,
-      "changePct": 0.0,
+      "changePct": 0.787,
       "currency": "CNY"
     },
     "002828.SZ": {
-      "price": 10.15,
+      "price": 10.16,
       "previousClose": 10.18,
-      "changePct": -0.295,
+      "changePct": -0.196,
       "currency": "CNY"
     },
     "161033.SZ": {
@@ -86,15 +86,15 @@
       "currency": "CNY"
     },
     "300405.SZ": {
-      "price": 5.33,
+      "price": 5.31,
       "previousClose": 5.31,
-      "changePct": 0.377,
+      "changePct": 0.0,
       "currency": "CNY"
     },
     "300629.SZ": {
-      "price": 17.74,
+      "price": 17.62,
       "previousClose": 17.78,
-      "changePct": -0.225,
+      "changePct": -0.9,
       "currency": "CNY"
     },
     "510150.SS": {
@@ -104,51 +104,51 @@
       "currency": "CNY"
     },
     "513500.SS": {
-      "price": 2.653,
+      "price": 2.656,
       "previousClose": 2.649,
-      "changePct": 0.151,
+      "changePct": 0.264,
       "currency": "CNY"
     },
     "515000.SS": {
-      "price": 1.062,
+      "price": 1.06,
       "previousClose": 1.05,
-      "changePct": 1.143,
+      "changePct": 0.952,
       "currency": "CNY"
     },
     "515030.SS": {
-      "price": 1.292,
+      "price": 1.293,
       "previousClose": 1.34,
-      "changePct": -3.582,
+      "changePct": -3.507,
       "currency": "CNY"
     },
     "515710.SS": {
-      "price": 0.488,
+      "price": 0.489,
       "previousClose": 0.497,
-      "changePct": -1.811,
+      "changePct": -1.61,
       "currency": "CNY"
     },
     "600519.SS": {
-      "price": 1307.61,
+      "price": 1309.69,
       "previousClose": 1331.88,
-      "changePct": -1.822,
+      "changePct": -1.666,
       "currency": "CNY"
     },
     "601012.SS": {
-      "price": 10.91,
+      "price": 10.99,
       "previousClose": 10.95,
-      "changePct": -0.365,
+      "changePct": 0.365,
       "currency": "CNY"
     },
     "USDHKD=X": {
-      "price": 7.8478,
+      "price": 7.8469,
       "previousClose": 7.8477,
-      "changePct": 0.0013,
+      "changePct": -0.0096,
       "currency": "HKD"
     },
     "USDCNY=X": {
-      "price": 6.6777,
+      "price": 6.6644,
       "previousClose": 6.6774,
-      "changePct": 0.0045,
+      "changePct": -0.1947,
       "currency": "CNY"
     }
   }
