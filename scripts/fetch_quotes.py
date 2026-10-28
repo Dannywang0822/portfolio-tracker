@@ -7,8 +7,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 # Built-in holdings + FX. Manual adds go into data/extra-symbols.json (or via watchlist issue).
+# SPCX is SpaceX on Nasdaq (Yahoo chart symbol SPCX, currency USD).
+# SPACE and SPACEX return 404 on the chart API — do not substitute them.
+# SPY is the NYSE Arca SPDR S&P 500 ETF (Yahoo chart symbol SPY, currency USD).
 BASE_SYMBOLS = [
-    "PDD", "COIN", "NVO", "CAG", "TSLA",
+    "PDD", "COIN", "NVO", "CAG", "TSLA", "SPCX", "SPY",
     "0700.HK", "0981.HK", "1519.HK", "9992.HK", "1119.HK",
     "000009.SZ", "002501.SZ", "002828.SZ", "161033.SZ", "300405.SZ", "300629.SZ",
     "510150.SS", "513500.SS", "515000.SS", "515030.SS", "515710.SS",

@@ -24,6 +24,8 @@
 - **行情来源**：GitHub Actions 定时写入 `data/quotes.json`（内置列表 + `data/extra-symbols.json`）。浏览器读不到你的 localStorage，所以**新代码默认不在定时列表里**
 - 页面会尝试用公共代理即时补拉缺失行情，并缓存到本机；若仍无现价，展开该卡片点 **「加入定时行情」**（会打开 GitHub Issue，标题形如 `watchlist: AAPL`），合并进 `extra-symbols.json` 后约 15 分钟内开始更新
 - 也可以直接把 Yahoo 代码发给看板管理员，代为写入 `data/extra-symbols.json`
+- **SPCX（SpaceX）**：定时行情键就是 Yahoo `SPCX`（Nasdaq，报价币种 USD）。chart 接口对 `SPACE` 和 `SPACEX` 返回 404，不能拿来替代。中信国际这行用 `SPCX`，和券商代码一致，卡片会正常出报价。
+- **SPY**：标准 Yahoo 键 `SPY`（NYSE Arca 的 SPDR S&P 500 ETF，报价币种 USD）。
 
 ## 在线地址
 

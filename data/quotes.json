@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-28T16:15:24.827163+08:00",
+  "updatedAt": "2026-10-28T22:13:50.486684+08:00",
   "quotes": {
     "PDD": {
       "price": 78.4,
@@ -29,6 +29,18 @@
       "price": 407.46,
       "previousClose": 391.62,
       "changePct": 4.045,
+      "currency": "USD"
+    },
+    "SPCX": {
+      "price": 143.25,
+      "previousClose": 148.58,
+      "changePct": -3.587,
+      "currency": "USD"
+    },
+    "SPY": {
+      "price": 770.845,
+      "previousClose": 769.66,
+      "changePct": 0.154,
       "currency": "USD"
     },
     "0700.HK": {
