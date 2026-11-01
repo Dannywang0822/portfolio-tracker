@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-02T02:51:41.204490+08:00",
+  "updatedAt": "2026-11-02T06:41:34.777272+08:00",
   "quotes": {
     "PDD": {
       "price": 78.61,
@@ -152,9 +152,9 @@
       "currency": "CNY"
     },
     "USDHKD=X": {
-      "price": 7.8443,
+      "price": 7.8436,
       "previousClose": 7.8449,
-      "changePct": -0.0079,
+      "changePct": -0.0168,
       "currency": "HKD"
     },
     "USDCNY=X": {
