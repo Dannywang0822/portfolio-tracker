@@ -488,9 +488,58 @@
     return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
   }
 
+  /* 盘前/盘后（不改变常规交易时段判断，只细分“已收盘”）
+   * A股：9:15–9:30 集合竞价；港股：9:00–9:30 开市前时段；美股：4:00–9:30 盘前、16:00–20:00 盘后（均按交易所当地时间，自动随夏令时变化） */
+  const EXTENDED = {
+    CN: { pre: [[9, 15], [9, 30]] },
+    HK: { pre: [[9, 0], [9, 30]] },
+    US: { pre: [[4, 0], [9, 30]], post: [[16, 0], [20, 0]] },
+  };
+  const WEEKDAY_CN = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+  function tzAbbr(date, timeZone) {
+    try {
+      const p = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" }).formatToParts(date);
+      const n = (p.find((x) => x.type === "timeZoneName") || {}).value || "";
+      if (timeZone === "Asia/Shanghai") return "北京";
+      if (timeZone === "Asia/Hong_Kong") return "香港";
+      return n; // 美东：EST / EDT
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function refineState(market, st, now) {
+    const parts = getZonedParts(now, market.timeZone);
+    const minutes = parts.hour * 60 + parts.minute;
+    const inRange = (r) => r && minutes >= r[0][0] * 60 + r[0][1] && minutes < r[1][0] * 60 + r[1][1];
+    const ext = EXTENDED[market.id] || {};
+    st.localHm = `${pad2(parts.hour)}:${pad2(parts.minute)}`;
+    st.localWeekday = WEEKDAY_CN[parts.weekday];
+    st.tz = tzAbbr(now, market.timeZone);
+    if (st.cssStatus === "weekend") {
+      st.status = "休市";
+      st.reason = "周末";
+    } else if (st.cssStatus === "holiday") {
+      st.status = "休市";
+      st.reason = "节假日";
+    } else if (st.cssStatus === "closed") {
+      if (st.preOpen && inRange(ext.pre)) {
+        st.status = "盘前";
+        st.cssStatus = "pre";
+      } else if (!st.preOpen && inRange(ext.post)) {
+        st.status = "盘后";
+        st.cssStatus = "post";
+      } else {
+        st.status = "已收盘";
+      }
+    }
+    return st;
+  }
+
   function getAllStates(now) {
     const t = now instanceof Date ? now : new Date();
-    return MARKETS.map((m) => getMarketState(m, t));
+    return MARKETS.map((m) => refineState(m, getMarketState(m, t), t));
   }
 
   global.MarketHours = {
