@@ -1464,7 +1464,8 @@
     }
 
   </style>
-  <link rel="stylesheet" href="./theme-cyberpunk.css" />
+  <link rel="stylesheet" href="./daynight.css?v=47" />
+  <script src="./daynight.js?v=47"></script>
 </head>
 <body>
   <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
@@ -1811,11 +1812,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   -->
-  <script src="./auth.js"></script>
+  <script src="./auth.js?v=47"></script>
   <!-- 腾讯云开发：仅在 *.tcloudbaseapp.com（或 ?cloud=tcb）启用，SDK 按需加载 ./vendor/cloudbase.full.js -->
-  <script src="./cloudbase-config.js"></script>
-  <script src="./cloudbase-auth.js"></script>
-  <script src="./market-hours.js"></script>
+  <script src="./cloudbase-config.js?v=47"></script>
+  <script src="./cloudbase-auth.js?v=47"></script>
+  <script src="./market-hours.js?v=47"></script>
   <script>
     const HOLDINGS = [
       {
@@ -2958,8 +2959,14 @@
       const openIds = new Set(
         Array.from(root.querySelectorAll(".card.open")).map((n) => n.getAttribute("data-id"))
       );
+      const totalMvUsd = list.reduce((acc, h) => {
+        const m = holdingMetrics(h);
+        return acc + (m.mvUsd != null && m.mvUsd > 0 ? m.mvUsd : 0);
+      }, 0);
       root.innerHTML = list.map((h) => {
-        const { q, loading, missing, price, changePct, costBasis, mv, pnl, pnlPct } = holdingMetrics(h);
+        const { q, loading, missing, price, changePct, costBasis, mv, pnl, pnlPct, mvUsd } = holdingMetrics(h);
+        const weight = totalMvUsd > 0 && mvUsd != null && mvUsd > 0 ? (mvUsd / totalMvUsd) * 100 : null;
+        const meter = weight == null ? "" : `<div class="pos-meter-wrap"><div class="pos-meter" aria-hidden="true"><i style="width:${Math.min(100, weight).toFixed(1)}%"></i></div><div class="pos-meter-label"><span>仓位 ${weight.toFixed(1)}%</span><span>__MV__</span></div></div>`;
         const stale = q && q.error ? `<div class="err-tag">报价更新失败，显示上次成功数据</div>` : "";
         const mkt = marketLabel(h.currency);
         const isOpen = openIds.has(h.id) ? " open" : "";
@@ -3010,6 +3017,7 @@
               </div>
               <div class="card-meta">${fmtNum(h.shares, 0)} 股 · 成本 ${fmtMoney(h.avgCost, h.currency)}</div>
             </div>
+            ${meter.replace("__MV__", mvText)}
             <div class="card-more">
               <div class="metric">
                 <div class="k">现价</div>

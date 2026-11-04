@@ -1,0 +1,201 @@
+/* 日夜双主题：白天 = 纸感卡片（浅色），夜间 = 深色终端。
+   由 daynight.js 在 <html> 上切换 .theme-day / .theme-night，不刷新页面。
+   红涨绿跌：.up 用 --red，.down 用 --green（沿用原约定）。 */
+
+/* ---------- 共享 ---------- */
+html.dn body{transition:background-color .45s ease,color .45s ease}
+html.dn.dn-fade body *{transition:background-color .45s ease,color .45s ease,border-color .45s ease!important}
+html.dn button,html.dn select,html.dn .chip,html.dn .card{min-height:44px}
+html.dn .chip{min-width:44px}
+html.dn .positions{column-count:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+html.dn .positions .card{break-inside:auto;margin:0}
+html.dn .pos-meter{height:6px;border-radius:3px;margin:10px 0 2px;overflow:hidden;background:var(--meter-bg)}
+html.dn .pos-meter i{display:block;height:100%;border-radius:inherit;background:var(--meter-fill)}
+html.dn .pos-meter-label{font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between}
+/* 主题切换控件 */
+.dn-toggle{display:inline-flex;align-items:center;gap:6px;min-height:44px;min-width:44px;padding:0 14px;cursor:pointer;font:inherit;font-weight:600;white-space:nowrap}
+.dn-toggle small{font-weight:400;opacity:.7}
+.dn-menu-btn{display:none}
+.dn-menu{position:fixed;z-index:10050;right:max(12px,var(--safe-right));top:calc(56px + var(--safe-top));min-width:220px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.dn-menu[hidden]{display:none}
+.dn-menu .dn-menu-title{font-size:.72rem;opacity:.7;padding:4px 8px 0}
+.dn-menu button{min-height:48px;text-align:left;padding:0 14px;font:inherit;cursor:pointer}
+.dn-menu button[aria-checked="true"]::after{content:" ✓";float:right}
+.dn-login-toggle{position:fixed;z-index:10020;top:calc(14px + var(--safe-top));right:calc(14px + var(--safe-right))}
+.dn-sun{font-size:.72rem;opacity:.75}
+/* 手机：切换按钮收进菜单 */
+@media (max-width:819px){
+  html.dn .toolbar-actions .dn-toggle{display:none}
+  html.dn .toolbar-actions .dn-menu-btn{display:inline-flex;align-items:center;justify-content:center}
+}
+
+/* ================= 白天：纸感卡片 ================= */
+html.theme-day{
+  --bg:#f4f2ee;--bg-elev:#ffffff;--bg-card:#ffffff;--border:#e7e3db;--border-soft:#efebe4;
+  --text:#1d1d1f;--muted:#7c7c82;--dim:#9a9aa0;--accent:#2f5bff;--accent-soft:rgba(47,91,255,.10);
+  --red:#e0383b;--red-soft:rgba(224,56,59,.10);--green:#16955a;--green-soft:rgba(22,149,90,.10);
+  --amber:#c97a00;--shadow:0 1px 2px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.05);--radius:20px;
+  --meter-bg:#eeebe5;--meter-fill:#1d1d1f;color-scheme:light;
+}
+html.theme-day body{background:var(--bg)!important;color:var(--text);font-family:-apple-system,"PingFang SC","Noto Sans SC","Noto Sans CJK SC","IBM Plex Sans",sans-serif}
+html.theme-day .app-header{background:rgba(244,242,238,.92)!important;border-bottom:1px solid transparent;box-shadow:none}
+html.theme-day .brand h1{color:var(--text);font-weight:700;letter-spacing:-.01em}
+html.theme-day .brand p{color:var(--muted)}
+html.theme-day .toolbar-actions button,html.theme-day .dn-toggle{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:22px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+html.theme-day .toolbar-actions button:hover,html.theme-day .dn-toggle:hover{box-shadow:0 6px 16px rgba(0,0,0,.08)}
+html.theme-day .summary-card,html.theme-day .mh-card,html.theme-day .fx-strip,html.theme-day .card,html.theme-day .market-hours,html.theme-day .view-bar{background:#fff!important;border:1px solid transparent!important;border-radius:var(--radius);box-shadow:var(--shadow)}
+html.theme-day .market-hours{background:transparent!important;box-shadow:none;padding:0}
+html.theme-day .view-bar{background:transparent!important;box-shadow:none}
+html.theme-day .summary-card.pnl-hero{background:linear-gradient(135deg,#1d1d1f,#3a3a46)!important;color:#fff}
+html.theme-day .summary-card.pnl-hero .label,html.theme-day .summary-card.pnl-hero .tri-ccy,html.theme-day .summary-card.pnl-hero .sub{color:rgba(255,255,255,.65)}
+html.theme-day .summary-card.pnl-hero .tri-v{color:#fff}
+html.theme-day .summary-card.pnl-hero .up{color:#ff8a8c!important}
+html.theme-day .summary-card.pnl-hero .down{color:#6fe0a6!important}
+html.theme-day .summary-card.pnl-hero .chip{background:rgba(255,255,255,.12)!important;color:#fff!important;border-color:transparent!important}
+html.theme-day .summary-card.pnl-hero .chip.active{background:#fff!important;color:#1d1d1f!important}
+html.theme-day .chip{background:#fff!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:22px!important}
+html.theme-day .chip.active{background:#1d1d1f!important;color:#fff!important;border-color:#1d1d1f!important}
+html.theme-day .tri-ccy{background:var(--bg);color:var(--muted);border-radius:6px}
+html.theme-day .mh-card{padding:14px 16px}
+html.theme-day .mh-card[data-status="open"]{box-shadow:0 0 0 2px rgba(224,56,59,.25),var(--shadow)}
+html.theme-day .sort-row select{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:14px;min-height:44px;padding:0 12px}
+html.theme-day .badge{background:var(--bg);color:var(--muted);border-color:transparent;border-radius:8px}
+html.theme-day .card:hover{box-shadow:0 10px 26px rgba(0,0,0,.09)}
+html.theme-day .card-more{border-top-color:var(--border-soft)}
+html.theme-day .metric{background:var(--bg);border-color:transparent;border-radius:12px}
+html.theme-day .card-actions button{border-radius:12px;background:#fff;border:1px solid var(--border);color:var(--text)}
+html.theme-day .sync-bar{background:rgba(255,255,255,.92)!important;border-top:1px solid var(--border)}
+html.theme-day .meta-pill{background:var(--bg)!important;border:1px solid var(--border)!important;color:var(--text);border-radius:16px}
+html.theme-day .sticky-pnl{background:rgba(255,255,255,.95);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:16px;color:var(--text)}
+html.theme-day .install-hint{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:14px}
+html.theme-day .login-gate{background:radial-gradient(circle at 20% 10%,#dfe6ff,transparent 50%),#f4f2ee!important}
+html.theme-day .login-card{background:#fff!important;border:0!important;border-radius:28px!important;box-shadow:0 20px 60px rgba(0,0,0,.08)!important;color:var(--text)}
+html.theme-day .login-card h1{color:var(--text)!important;background:none!important;-webkit-text-fill-color:currentColor;filter:none}
+html.theme-day .login-field input,html.theme-day .hm-field input,html.theme-day .hm-field select{background:var(--bg)!important;border:1px solid var(--border)!important;border-radius:14px!important;color:var(--text)!important;min-height:52px;font-size:16px}
+html.theme-day #loginSubmit,html.theme-day #forgotSubmit,html.theme-day #registerSubmit,html.theme-day .hm-actions .primary{background:#1d1d1f!important;color:#fff!important;border:0!important;border-radius:14px!important;min-height:52px;font-weight:600}
+html.theme-day .auth-mode-pill{background:var(--bg);color:var(--muted);border-color:var(--border)}
+html.theme-day .holding-modal-card,html.theme-day .confirm-card{background:#fff!important;border:0!important;border-radius:24px!important;color:var(--text)}
+html.theme-day .dn-menu{background:#fff;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.16);color:var(--text)}
+html.theme-day .dn-menu button{background:var(--bg);border:0;border-radius:12px;color:var(--text)}
+/* 白天焦点：深色双层描边 + 卡片上浮 */
+html.theme-day :focus-visible{outline:none!important;box-shadow:0 0 0 3px #fff,0 0 0 6px #1d1d1f,0 14px 30px rgba(0,0,0,.18)!important;position:relative;z-index:2}
+html.theme-day .card:focus-visible,html.theme-day .mh-card:focus-visible,html.theme-day .summary-card:focus-visible{transform:translateY(-4px)}
+html.theme-day .card{transition:transform .15s ease,box-shadow .15s ease}
+
+/* ================= 夜间：深色终端 ================= */
+html.theme-night{
+  --bg:#12161c;--bg-elev:#1a2028;--bg-card:#161b22;--border:#2a3340;--border-soft:#1e2630;
+  --text:#c3ced8;--muted:#7a8a98;--dim:#5e6c79;--accent:#e0a020;--accent-soft:rgba(224,160,32,.12);
+  --red:#e85a5c;--red-soft:rgba(232,90,92,.12);--green:#3dba72;--green-soft:rgba(61,186,114,.12);
+  --amber:#e0a020;--shadow:none;--radius:2px;--meter-bg:#232b35;--meter-fill:#e0a020;color-scheme:dark;
+}
+html.theme-night body{background:var(--bg)!important;color:var(--text);font-family:"IBM Plex Mono","JetBrains Mono","DejaVu Sans Mono","Noto Sans SC",monospace}
+html.theme-night .app-header{background:#0e1217!important;border-bottom:1px solid var(--border)}
+html.theme-night .brand h1{color:var(--amber);letter-spacing:.12em;font-size:1.1rem;text-transform:uppercase}
+html.theme-night .brand h1::before{content:"▮ "}
+html.theme-night .brand p{color:var(--muted)}
+html.theme-night .toolbar-actions button,html.theme-night .dn-toggle{background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:0;font-family:inherit}
+html.theme-night .toolbar-actions button:hover,html.theme-night .dn-toggle:hover{border-color:var(--amber);color:var(--amber)}
+html.theme-night .dn-toggle{color:var(--amber)}
+html.theme-night .summary-card,html.theme-night .mh-card,html.theme-night .fx-strip,html.theme-night .card,html.theme-night .market-hours{background:var(--bg-card)!important;border:1px solid var(--border)!important;border-radius:2px!important;box-shadow:none!important}
+html.theme-night .market-hours{background:transparent!important;border:0!important;padding:0}
+html.theme-night .summary-card .label,html.theme-night .market-hours-title{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:.7rem}
+html.theme-night .summary-card.pnl-hero{border-left:3px solid var(--amber)!important}
+html.theme-night .tri-ccy{background:#0e1217;color:var(--amber);border-radius:0}
+html.theme-night .tri-v{font-family:inherit}
+html.theme-night .chip{background:transparent!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:0!important}
+html.theme-night .chip.active{color:var(--amber)!important;border-color:var(--amber)!important;background:#2a2208!important}
+html.theme-night .sort-row select{background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:0;min-height:44px;font-family:inherit}
+html.theme-night .badge{border-radius:0;background:#0e1217;color:var(--muted);border-color:var(--border)}
+html.theme-night .pos-ticker>span:first-child{color:var(--amber)}
+html.theme-night .card:hover{background:#1c2430!important}
+html.theme-night .metric{background:#0e1217;border-color:var(--border);border-radius:0}
+html.theme-night .card-actions button{border-radius:0;background:var(--bg-elev);border:1px solid var(--border);color:var(--text)}
+html.theme-night .sync-bar{background:#0e1217!important;border-top:1px solid var(--border)}
+html.theme-night .meta-pill{background:var(--bg-elev)!important;border:1px solid var(--border)!important;border-radius:0;color:var(--text)}
+html.theme-night .sticky-pnl{background:#0e1217;border:1px solid var(--border);border-radius:0}
+html.theme-night .install-hint{background:var(--bg-elev);border:1px solid var(--border);border-radius:0;color:var(--text)}
+html.theme-night .login-gate{background:repeating-linear-gradient(0deg,#12161c 0 3px,#151a21 3px 4px)!important}
+html.theme-night .login-card{background:var(--bg-elev)!important;border:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;color:var(--text)}
+html.theme-night .login-card h1{color:var(--amber)!important;background:none!important;-webkit-text-fill-color:currentColor;filter:none;letter-spacing:.12em}
+html.theme-night .login-field input,html.theme-night .hm-field input,html.theme-night .hm-field select{background:#0e1217!important;border:1px solid var(--border)!important;border-radius:0!important;color:var(--text)!important;min-height:48px;font-size:16px;font-family:inherit}
+html.theme-night #loginSubmit,html.theme-night #forgotSubmit,html.theme-night #registerSubmit,html.theme-night .hm-actions .primary{background:var(--amber)!important;color:#1a1400!important;border:0!important;border-radius:0!important;min-height:48px;font-weight:700}
+html.theme-night .holding-modal-card,html.theme-night .confirm-card{background:var(--bg-elev)!important;border:1px solid var(--border)!important;border-radius:0!important;color:var(--text)}
+html.theme-night .dn-menu{background:var(--bg-elev);border:1px solid var(--border);color:var(--text)}
+html.theme-night .dn-menu button{background:#0e1217;border:1px solid var(--border);color:var(--text);font-family:inherit}
+html.theme-night :focus-visible{outline:3px solid var(--amber)!important;outline-offset:1px;box-shadow:0 0 0 6px rgba(224,160,32,.22)!important}
+html.theme-night .card:focus-visible{background:#2a2208!important}
+html.theme-night .up{text-shadow:none!important}html.theme-night .down{text-shadow:none!important}
+html.theme-day .up,html.theme-day .down{text-shadow:none!important}
+/* 夜间持仓：终端行 */
+@media (min-width:820px){
+  html.theme-night .positions{gap:0;border:1px solid var(--border)}
+  html.theme-night .positions .card{border-width:0 0 1px 0!important;display:grid;grid-template-columns:minmax(180px,1.4fr) 1fr 1fr;align-items:center;column-gap:16px;padding:8px 14px}
+  html.theme-night .positions .card .card-face{display:contents}
+  html.theme-night .positions .card .pos-meter-wrap,html.theme-night .positions .card .card-more{grid-column:1/-1}
+}
+
+/* ================= 布局：电脑 ================= */
+@media (min-width:1024px){
+  html.dn .wrap{max-width:1440px;display:grid;grid-template-columns:400px minmax(0,1fr);column-gap:24px;row-gap:0;align-items:start;padding:0 28px 90px;
+    grid-template-areas:"hd hd" "hint hint" "note note" "sum bar" "sum pos" "mh pos" "pg pg" "st st" "ft ft";grid-template-rows:auto auto auto auto auto 1fr auto auto auto}
+  html.dn .app-header{grid-area:hd;margin:0 -28px 18px;padding-left:28px;padding-right:28px}
+  html.dn .install-hint{grid-area:hint}html.dn #fxNote{grid-area:note}
+  html.dn .summary{grid-area:sum;grid-template-columns:1fr 1fr;align-self:start;margin:0}
+  html.dn .summary-card.pnl-hero,html.dn .fx-strip{grid-column:1/-1}
+  html.dn .market-hours{grid-area:mh;margin-top:14px;align-self:start}
+  html.dn .market-hours-grid{grid-template-columns:1fr!important}
+  html.dn .view-bar{grid-area:bar;margin-top:0}
+  html.dn .positions{grid-area:pos;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));align-content:start}
+  html.dn .dn-page{grid-area:pg}
+  html.dn .status-row{grid-area:st}html.dn footer{grid-area:ft}
+  html.dn .sticky-pnl{display:none!important}
+  html.theme-night .wrap{grid-template-columns:360px minmax(0,1fr)}
+  html.theme-night .positions{grid-template-columns:minmax(0,1fr)}
+}
+/* ================= 布局：TV（≥1800px） ================= */
+@media (min-width:1800px){
+  html.dn{font-size:20px}
+  html.dn .wrap{max-width:none;grid-template-columns:560px minmax(0,1fr);column-gap:36px;padding:0 44px 100px}
+  html.dn .app-header{margin:0 -44px 22px;padding:16px 44px}
+  html.dn .brand h1{font-size:1.8rem}
+  html.dn .positions{max-height:calc(100vh - 330px);overflow:hidden;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:10px;margin:-10px}
+  html.theme-night .positions{grid-template-columns:minmax(0,1fr);gap:0;margin:0;padding:0}
+  html.dn .summary-card.pnl-hero .tri-row:first-child .tri-v{font-size:2.6rem!important}
+  html.dn .mh-card{padding:16px 22px}
+  html.dn .mh-name{font-size:1.25rem}html.dn .mh-count{font-size:1.5rem}
+  html.dn .chip{min-height:52px;padding:0 20px}
+  html.dn .pos-name{font-size:1.2rem}html.dn .card-pnl{font-size:1.7rem}
+  html.dn .card{padding:18px 22px}
+  html.dn .pos-meter{height:10px;border-radius:5px}
+  html.dn #addHoldingBtn{display:none!important}
+  html.dn .dn-page:not(:empty){display:block}
+}
+.dn-page{display:block}
+}
+.dn-page{display:none;grid-column:2;text-align:right;font-size:.8rem;color:var(--muted);padding:6px 4px}
+
+/* ---------- 修正：汇总列不溢出、按钮配色 ---------- */
+html.dn .summary,html.dn .summary-card,html.dn .market-hours,html.dn .view-bar,html.dn .positions{min-width:0}
+html.dn .summary-card{overflow:hidden}
+html.dn .summary-card-head{flex-wrap:wrap;gap:8px}
+html.dn .tri-v{overflow-wrap:anywhere}
+@media (min-width:1024px){
+  html.dn .summary{grid-template-columns:minmax(0,1fr)!important;gap:12px}
+  html.dn .summary-card{grid-column:auto!important}
+}
+@media (min-width:1800px){html.dn .summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}html.dn .summary-card.pnl-hero,html.dn .summary .daily-pnl-card,html.dn .fx-strip{grid-column:1/-1!important}}
+html.theme-day .summary-card.pnl-hero .tri-ccy{background:rgba(255,255,255,.14);color:rgba(255,255,255,.8)}
+html.theme-day #refreshBtn,html.theme-day #logoutBtn,html.theme-day .dn-menu-btn{background:#fff!important;color:var(--text)!important;border:1px solid var(--border)!important}
+html.theme-day #addHoldingBtn{background:#1d1d1f!important;color:#fff!important;border:0!important}
+html.theme-night #refreshBtn,html.theme-night #logoutBtn,html.theme-night #addHoldingBtn,html.theme-night .dn-menu-btn{background:var(--bg-elev)!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:0!important}
+html.theme-night #addHoldingBtn{color:var(--amber)!important;border-color:var(--amber)!important}
+html.dn .toolbar-actions button{min-height:44px;padding:0 14px}
+@media (min-width:1800px){html.dn .toolbar-actions button{min-height:52px;padding:0 20px;font-size:.9rem}}
+html.dn .card-hint{display:none}
+@media (min-width:1800px){
+  html.dn .summary{grid-template-columns:minmax(0,1fr)!important}
+  html.dn .install-hint{display:none!important}
+  html.dn .wrap{grid-template-columns:600px minmax(0,1fr)}
+  html.dn .positions{max-height:calc(100vh - 300px)}
+}
