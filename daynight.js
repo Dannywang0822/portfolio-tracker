@@ -44,6 +44,7 @@
   var t0 = Date.now();
   var nowParam = q.get("now"), base = nowParam && !isNaN(Date.parse(nowParam)) ? Date.parse(nowParam) : t0;
   function now() { return new Date(base + (Date.now() - t0)); }
+  window.DN_NOW = now; // 供交易时段卡片使用同一时钟（便于 ?now= 测试）
 
   function geo() {
     try { var c = JSON.parse(lsGet(GEO_KEY)); if (c && isFinite(c.lat) && isFinite(c.lng)) return c; } catch (e) { /* ignore */ }

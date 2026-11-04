@@ -1464,8 +1464,8 @@
     }
 
   </style>
-  <link rel="stylesheet" href="./daynight.css?v=47" />
-  <script src="./daynight.js?v=47"></script>
+  <link rel="stylesheet" href="./daynight.css?v=48" />
+  <script src="./daynight.js?v=48"></script>
 </head>
 <body>
   <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
@@ -1660,6 +1660,7 @@
           </div>
           <div class="mh-count-label">加载中</div>
           <div class="mh-count">--:--:--</div>
+          <div class="mh-local">当地 --:--</div>
           <div class="mh-holiday hint" hidden></div>
         </article>
         <article class="mh-card" data-market="HK" data-status="closed" role="listitem">
@@ -1672,6 +1673,7 @@
           </div>
           <div class="mh-count-label">加载中</div>
           <div class="mh-count">--:--:--</div>
+          <div class="mh-local">当地 --:--</div>
           <div class="mh-holiday hint" hidden></div>
         </article>
         <article class="mh-card" data-market="US" data-status="closed" role="listitem">
@@ -1684,6 +1686,7 @@
           </div>
           <div class="mh-count-label">加载中</div>
           <div class="mh-count">--:--:--</div>
+          <div class="mh-local">当地 --:--</div>
           <div class="mh-holiday hint" hidden></div>
         </article>
       </div>
@@ -1812,11 +1815,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   -->
-  <script src="./auth.js?v=47"></script>
+  <script src="./auth.js?v=48"></script>
   <!-- 腾讯云开发：仅在 *.tcloudbaseapp.com（或 ?cloud=tcb）启用，SDK 按需加载 ./vendor/cloudbase.full.js -->
-  <script src="./cloudbase-config.js?v=47"></script>
-  <script src="./cloudbase-auth.js?v=47"></script>
-  <script src="./market-hours.js?v=47"></script>
+  <script src="./cloudbase-config.js?v=48"></script>
+  <script src="./cloudbase-auth.js?v=48"></script>
+  <script src="./market-hours.js?v=48"></script>
   <script>
     const HOLDINGS = [
       {
@@ -3575,7 +3578,7 @@
     /* 三市场交易时段倒计时 */
     function renderMarketHours() {
       if (!window.MarketHours) return;
-      const states = MarketHours.getAllStates(new Date());
+      const states = MarketHours.getAllStates(window.DN_NOW ? window.DN_NOW() : new Date());
       const grid = el("marketHoursGrid");
       if (!grid) return;
       states.forEach((st) => {
@@ -3587,6 +3590,10 @@
         const countEl = card.querySelector(".mh-count");
         const holEl = card.querySelector(".mh-holiday");
         if (statusEl) statusEl.textContent = st.status;
+        const localEl = card.querySelector(".mh-local");
+        if (localEl) {
+          localEl.textContent = `当地 ${st.localWeekday || ""} ${st.localHm || ""}${st.tz ? " " + st.tz : ""}${st.reason ? " · " + st.reason : ""}`;
+        }
         if (labelEl) labelEl.textContent = st.countdownLabel;
         if (countEl) countEl.textContent = MarketHours.formatCountdown(st.countdownMs);
         if (holEl) {

@@ -2,17 +2,17 @@
  * - 壳资源：HTML/JS 网络优先（避免旧壳卡住登录门控），其余缓存优先
  * - 行情请求：网络优先，绝不把过期报价当成唯一来源
  */
-const CACHE_NAME = "portfolio-h5-shell-v47";
+const CACHE_NAME = "portfolio-h5-shell-v48";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
   "./firebase-config.js",
-  "./auth.js?v=47",
-  "./cloudbase-config.js?v=47",
-  "./cloudbase-auth.js?v=47",
-  "./market-hours.js?v=47",
-  "./daynight.css?v=47",
-  "./daynight.js?v=47",
+  "./auth.js?v=48",
+  "./cloudbase-config.js?v=48",
+  "./cloudbase-auth.js?v=48",
+  "./market-hours.js?v=48",
+  "./daynight.css?v=48",
+  "./daynight.js?v=48",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

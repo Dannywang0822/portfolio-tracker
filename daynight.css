@@ -199,3 +199,64 @@ html.dn .card-hint{display:none}
   html.dn .wrap{grid-template-columns:600px minmax(0,1fr)}
   html.dn .positions{max-height:calc(100vh - 300px)}
 }
+
+/* ================= 三市场交易时段（日夜统一结构） ================= */
+html.dn .market-hours{padding:0!important;margin:14px 0 0;background:transparent!important;border:0!important;box-shadow:none!important}
+html.dn .market-hours::before,html.dn .market-hours::after{display:none!important}
+html.dn .market-hours-head{margin:0 2px 8px;display:flex;align-items:baseline;justify-content:space-between}
+html.dn .market-hours-title{font-size:.8rem;font-weight:700;color:var(--text);letter-spacing:.02em;text-transform:none}
+html.dn .market-hours-title span{font-size:.72rem;color:var(--muted);font-weight:400;margin-left:8px}
+html.dn .market-hours-grid{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:8px}
+html.dn .mh-card{--mh-c:var(--muted);--mh-bg:transparent;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name status" "label count" "local local" "hol hol";column-gap:12px;row-gap:4px;align-items:center;padding:12px 14px!important;min-height:44px;overflow:hidden;transform:none!important;text-shadow:none}
+html.dn .mh-card::before{display:none}
+html.dn .mh-top{display:contents}
+html.dn .mh-top>div:first-child{grid-area:name;display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.dn .mh-name{font-size:1rem;font-weight:700;color:var(--text);text-shadow:none;letter-spacing:0}
+html.dn .mh-sub{font-size:.72rem;color:var(--muted);margin:0}
+html.dn .mh-status{grid-area:status;justify-self:end;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;font-size:.75rem;font-weight:600;line-height:1.3;white-space:nowrap;border-radius:999px;color:var(--mh-c)!important;background:var(--mh-bg)!important;border:1px solid color-mix(in srgb,var(--mh-c) 30%,transparent)!important}
+html.dn .mh-dot{width:7px;height:7px;box-shadow:none!important}
+html.dn .mh-count-label{grid-area:label;margin:0;font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.dn .mh-count{grid-area:count;justify-self:end;font-family:"IBM Plex Mono","JetBrains Mono",ui-monospace,monospace;font-size:1.15rem;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:0;color:var(--text)!important;text-shadow:none!important;line-height:1.2;white-space:nowrap}
+html.dn .mh-local{grid-area:local;font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+html.dn .mh-holiday{grid-area:hol;margin:4px 0 0;font-size:.72rem;border-radius:8px}
+html.dn .mh-card[data-status="open"]{--mh-c:var(--mh-open)}
+html.dn .mh-card[data-status="lunch"]{--mh-c:var(--mh-lunch)}
+html.dn .mh-card[data-status="pre"],html.dn .mh-card[data-status="post"]{--mh-c:var(--mh-ext)}
+html.dn .mh-card[data-status="closed"],html.dn .mh-card[data-status="weekend"]{--mh-c:var(--muted)}
+html.dn .mh-card[data-status="holiday"]{--mh-c:var(--mh-hol)}
+html.dn .mh-card[data-status="open"] .mh-dot{animation:mh-pulse 1.6s ease-in-out infinite}
+html.dn .mh-card[data-status]:not([data-status="open"]) .mh-dot{animation:none}
+html.theme-day{--mh-open:#0f8a52;--mh-lunch:#b26a00;--mh-ext:#3b5bdb;--mh-hol:#c2410c}
+html.theme-day .mh-card{border:1px solid transparent!important;background:#fff!important;box-shadow:var(--shadow)!important;border-radius:16px!important}
+html.theme-day .mh-card{--mh-bg:color-mix(in srgb,var(--mh-c) 10%,#fff)}
+html.theme-day .mh-card[data-status="open"]{box-shadow:inset 3px 0 0 var(--mh-open),var(--shadow)!important}
+html.theme-day .mh-holiday{background:#fff4ec;color:#9a3412;border:0}
+html.theme-day .mh-holiday.hint{background:var(--bg);color:var(--muted)}
+html.theme-day .mh-holiday strong{color:inherit}
+html.theme-night{--mh-open:#3dba72;--mh-lunch:#e0a020;--mh-ext:#7aa2f7;--mh-hol:#e8825c}
+html.theme-night .mh-card{background:var(--bg-card)!important;border:1px solid var(--border)!important;border-radius:2px!important;box-shadow:none!important}
+html.theme-night .mh-card{--mh-bg:color-mix(in srgb,var(--mh-c) 12%,transparent)}
+html.theme-night .mh-status{border-radius:0}
+html.theme-night .mh-card[data-status="open"]{border-left:3px solid var(--mh-open)!important}
+html.theme-night .mh-holiday{background:#0e1217;color:var(--muted);border:1px solid var(--border);border-radius:0}
+html.theme-night .mh-holiday strong{color:var(--text)}
+@media (min-width:1024px){html.dn .market-hours{margin-top:16px}}
+
+/* TV：交易时段移到右栏顶部横排，左栏只放汇总，一屏看全 */
+@media (min-width:1800px){
+  html.dn .wrap{grid-template-areas:"hd hd" "sum mh" "sum bar" "sum pos" "sum pg" "st st" "ft ft";grid-template-rows:auto auto auto 1fr auto auto auto}
+  html.dn .market-hours{margin:0 0 14px}
+  html.dn .market-hours-head{display:none}
+  html.dn .market-hours-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px}
+  html.dn .mh-card{padding:14px 18px!important}
+  html.dn .mh-name{font-size:1.05rem}
+  html.dn .mh-count{font-size:1.3rem}
+  html.dn .summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:14px}
+  html.dn .summary-card.pnl-hero,html.dn .summary .daily-pnl-card,html.dn .fx-strip{grid-column:1/-1!important}
+  html.dn .summary-card{padding:14px 16px!important}
+  html.dn .summary-card .summary-mkt-filter .chip{min-height:40px;padding:0 10px;font-size:.75rem}
+  html.dn .summary-card .tri-row{padding:2px 0}
+  html.dn .summary-card .sub{font-size:.75rem}
+  html.dn .positions{max-height:calc(100vh - 360px)}
+}
+html.dn .mh-sub{display:inline!important}
