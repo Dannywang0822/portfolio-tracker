@@ -1464,8 +1464,8 @@
     }
 
   </style>
-  <link rel="stylesheet" href="./daynight.css?v=49" />
-  <script src="./daynight.js?v=49"></script>
+  <link rel="stylesheet" href="./daynight.css?v=51" />
+  <script src="./daynight.js?v=51"></script>
 </head>
 <body>
   <!-- Auth overlay: local gate until window.__FIREBASE_CONFIG__ is injected -->
@@ -1701,6 +1701,7 @@
     </div>
 
     <div class="view-bar" id="viewBar">
+      <div class="filter-rows" id="filterRows">
       <div class="chip-row" role="tablist" aria-label="账户筛选">
         <button type="button" class="chip active" data-account="all">全部账户</button>
         <button type="button" class="chip" data-account="futu">富途</button>
@@ -1713,6 +1714,7 @@
         <button type="button" class="chip" data-market="CNY">A股</button>
         <button type="button" class="chip" data-market="HKD">港股</button>
         <button type="button" class="chip" data-market="USD">美股</button>
+      </div>
       </div>
       <div class="sort-row">
         <label for="sortSelect">排序</label>
@@ -1815,11 +1817,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   -->
-  <script src="./auth.js?v=49"></script>
+  <script src="./auth.js?v=51"></script>
   <!-- 腾讯云开发：仅在 *.tcloudbaseapp.com（或 ?cloud=tcb）启用，SDK 按需加载 ./vendor/cloudbase.full.js -->
-  <script src="./cloudbase-config.js?v=49"></script>
-  <script src="./cloudbase-auth.js?v=49"></script>
-  <script src="./market-hours.js?v=49"></script>
+  <script src="./cloudbase-config.js?v=51"></script>
+  <script src="./cloudbase-auth.js?v=51"></script>
+  <script src="./market-hours.js?v=51"></script>
   <script>
     const HOLDINGS = [
       {

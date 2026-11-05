@@ -166,6 +166,10 @@
     var gate = document.getElementById("loginGate");
     if (gate) gate.appendChild(makeToggle("dn-login-toggle"));
     initPaging();
+    fitPositionsPane();
+    window.addEventListener("resize", fitPositionsPane);
+    window.addEventListener("orientationchange", fitPositionsPane);
+    setInterval(fitPositionsPane, 1500);
     updateLabels();
   }
 
@@ -230,6 +234,22 @@
   ["keydown", "pointerdown", "wheel", "touchstart", "mousemove"].forEach(function (ev) {
     window.addEventListener(ev, function () { lastInput = Date.now(); }, { passive: true });
   });
+  function fitPositionsPane() {
+    try {
+      if (!window.matchMedia("(min-width: 1024px)").matches) {
+        document.documentElement.style.removeProperty("--pos-fit-h");
+        return;
+      }
+      var box = document.getElementById("positions");
+      var sync = document.querySelector(".sync-bar");
+      if (!box) return;
+      var top = box.getBoundingClientRect().top;
+      var bottom = sync && !sync.hidden ? sync.getBoundingClientRect().top : window.innerHeight;
+      var h = Math.max(180, Math.floor(bottom - top - 8));
+      document.documentElement.style.setProperty("--pos-fit-h", h + "px");
+    } catch (e) { /* ignore */ }
+  }
+
   function initPaging() {
     var box = document.getElementById("positions");
     if (!box) return;

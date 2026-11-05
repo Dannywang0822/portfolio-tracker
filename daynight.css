@@ -264,3 +264,141 @@ html.theme-night .mh-holiday strong{color:var(--text)}
   html.dn .positions{max-height:calc(100vh - 360px);overflow-y:auto;overscroll-behavior:contain}
 }
 html.dn .mh-sub{display:inline!important}
+
+/* ================= layout-compact-desk：电脑端加高持仓可视区（≥1024，不动手机） ================= */
+@media (min-width:1024px){
+  /* 收紧顶栏与列间距 */
+  html.dn .app-header{margin-bottom:10px!important}
+  html.dn .wrap{column-gap:16px;padding-bottom:calc(12px + var(--sync-bar-h) + var(--safe-bottom))!important}
+
+  /* 账户 + 市场筛选同一行；排序单独次行更矮 */
+  html.dn .view-bar{
+    flex-direction:row!important;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px 10px!important;
+    margin:0 0 8px!important;
+    padding:4px 0!important;
+    position:sticky;
+    top:calc(var(--header-h) + var(--safe-top));
+    background:color-mix(in srgb,var(--bg) 92%,transparent);
+  }
+  html.dn .view-bar .chip-row{
+    flex:0 1 auto;
+    min-width:0;
+    overflow-x:auto;
+    padding-bottom:0;
+  }
+  html.dn .view-bar .sort-row{
+    flex:1 1 auto;
+    margin-left:auto;
+    min-height:0;
+    padding:0;
+  }
+  html.dn .view-bar .chip{
+    min-height:36px!important;
+    padding:0 12px!important;
+    font-size:.78rem!important;
+  }
+
+  /* 交易时段：窄条，状态+倒计时+当地时间 */
+  html.dn .market-hours{margin-top:8px!important}
+  html.dn .market-hours-head{margin:0 2px 4px!important}
+  html.dn .market-hours-grid{gap:4px!important}
+  html.dn .mh-card{
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    grid-template-areas:"name status count" "local local local" "hol hol hol"!important;
+    padding:6px 10px!important;
+    row-gap:1px!important;
+    column-gap:8px!important;
+    min-height:0!important;
+  }
+  html.dn .mh-count-label{display:none!important}
+  html.dn .mh-name{font-size:.88rem!important}
+  html.dn .mh-status{padding:2px 8px!important;font-size:.68rem!important}
+  html.dn .mh-count{font-size:1rem!important}
+  html.dn .mh-local{font-size:.68rem!important;margin-top:0}
+  html.dn .mh-holiday{margin-top:2px!important;padding:3px 6px!important;font-size:.65rem!important}
+  html.dn .mh-sub{display:none!important}
+
+  /* 汇总略收紧，腾出纵向空间 */
+  html.dn .summary{gap:8px!important}
+  html.dn .summary-card{padding:10px 12px!important}
+  html.dn .summary-card.pnl-hero{padding:12px 14px!important}
+
+  /* 持仓区：填满视口剩余高度，内部顺滑滚动，不被底栏挡住 */
+  html.dn .positions{
+    max-height:calc(100dvh - var(--header-h) - var(--sync-bar-h) - 130px)!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:8px;
+    align-content:start;
+  }
+}
+
+/* 电脑中宽：左栏交易时段也保持窄条 */
+@media (min-width:1024px) and (max-width:1799.98px){
+  html.dn .market-hours{margin-top:10px!important}
+  html.dn .positions{
+    max-height:calc(100dvh - var(--header-h) - var(--sync-bar-h) - 120px)!important;
+  }
+}
+
+/* TV 宽屏：横排时段更扁，筛选同行，持仓可视区大幅加高 */
+@media (min-width:1800px){
+  html.dn .market-hours{margin:0 0 8px!important}
+  html.dn .market-hours-grid{gap:8px!important}
+  html.dn .mh-card{
+    padding:8px 12px!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:"name status" "local count" "hol hol"!important;
+  }
+  html.dn .mh-name{font-size:.95rem!important}
+  html.dn .mh-count{font-size:1.05rem!important;justify-self:end}
+  html.dn .mh-local{font-size:.7rem!important}
+  html.dn .view-bar{margin:0 0 8px!important;padding:2px 0!important}
+  html.dn .view-bar .chip{min-height:40px!important;padding:0 14px!important}
+  html.dn .summary{gap:10px!important}
+  html.dn .summary-card{padding:12px 14px!important}
+  html.dn .positions{
+    max-height:calc(100dvh - var(--header-h) - var(--sync-bar-h) - 150px)!important;
+    overflow-y:auto!important;
+    gap:12px;
+  }
+  html.theme-night .positions{gap:0}
+}
+
+/* filter-rows：桌面账户+市场同一行；手机保持原纵向 */
+html.dn .filter-rows{display:contents}
+@media (min-width:1024px){
+  html.dn .filter-rows{
+    display:flex!important;
+    flex-wrap:nowrap;
+    align-items:center;
+    gap:8px 12px;
+    min-width:0;
+    flex:1 1 auto;
+    overflow-x:auto;
+    scrollbar-width:thin;
+  }
+  html.dn .view-bar{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:center;
+    gap:8px 12px!important;
+  }
+  html.dn .view-bar .sort-row{
+    flex:0 0 auto;
+    margin-left:0;
+    white-space:nowrap;
+  }
+}
+
+@media (min-width:1024px){
+  html.dn .positions{
+    max-height:var(--pos-fit-h, calc(100dvh - var(--header-h) - var(--sync-bar-h) - 130px))!important;
+  }
+}
