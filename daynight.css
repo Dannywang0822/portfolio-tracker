@@ -153,13 +153,17 @@ html.theme-day .up,html.theme-day .down{text-shadow:none!important}
   html.theme-night .wrap{grid-template-columns:360px minmax(0,1fr)}
   html.theme-night .positions{grid-template-columns:minmax(0,1fr)}
 }
+/* 电脑：持仓区随页面增高，靠窗口滚动看完全部；禁止误用 TV 的裁切 */
+@media (min-width:1024px) and (max-width:1799.98px){
+  html.dn .positions{max-height:none!important;overflow:visible!important;height:auto!important}
+}
 /* ================= 布局：TV（≥1800px） ================= */
 @media (min-width:1800px){
   html.dn{font-size:20px}
   html.dn .wrap{max-width:none;grid-template-columns:560px minmax(0,1fr);column-gap:36px;padding:0 44px 100px}
   html.dn .app-header{margin:0 -44px 22px;padding:16px 44px}
   html.dn .brand h1{font-size:1.8rem}
-  html.dn .positions{max-height:calc(100vh - 330px);overflow:hidden;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:10px;margin:-10px}
+  html.dn .positions{max-height:calc(100vh - 330px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:10px;margin:-10px;-webkit-overflow-scrolling:touch}
   html.theme-night .positions{grid-template-columns:minmax(0,1fr);gap:0;margin:0;padding:0}
   html.dn .summary-card.pnl-hero .tri-row:first-child .tri-v{font-size:2.6rem!important}
   html.dn .mh-card{padding:16px 22px}
@@ -197,7 +201,7 @@ html.dn .card-hint{display:none}
   html.dn .summary{grid-template-columns:minmax(0,1fr)!important}
   html.dn .install-hint{display:none!important}
   html.dn .wrap{grid-template-columns:600px minmax(0,1fr)}
-  html.dn .positions{max-height:calc(100vh - 300px)}
+  html.dn .positions{max-height:calc(100vh - 300px);overflow-y:auto;overscroll-behavior:contain}
 }
 
 /* ================= 三市场交易时段（日夜统一结构） ================= */
@@ -257,6 +261,6 @@ html.theme-night .mh-holiday strong{color:var(--text)}
   html.dn .summary-card .summary-mkt-filter .chip{min-height:40px;padding:0 10px;font-size:.75rem}
   html.dn .summary-card .tri-row{padding:2px 0}
   html.dn .summary-card .sub{font-size:.75rem}
-  html.dn .positions{max-height:calc(100vh - 360px)}
+  html.dn .positions{max-height:calc(100vh - 360px);overflow-y:auto;overscroll-behavior:contain}
 }
 html.dn .mh-sub{display:inline!important}
