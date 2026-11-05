@@ -237,7 +237,10 @@
     ind.className = "dn-page"; ind.setAttribute("aria-live", "polite");
     box.parentNode.insertBefore(ind, box.nextSibling);
     function pages() { return box.clientHeight ? Math.max(1, Math.ceil((box.scrollHeight - 4) / box.clientHeight)) : 1; }
-    function isTvLayout() { return getComputedStyle(box).overflowY === "hidden" && box.scrollHeight > box.clientHeight + 4; }
+    function isTvLayout() {
+      // ≥1800 为 TV 布局；电脑端即使窗口很宽也可滚（overflow-y:auto），仍可选用自动翻页
+      return window.matchMedia("(min-width: 1800px)").matches && box.scrollHeight > box.clientHeight + 4;
+    }
     function paint(paused) {
       if (!isTvLayout()) { ind.textContent = ""; return; }
       var p = Math.round(box.scrollTop / box.clientHeight) + 1;
