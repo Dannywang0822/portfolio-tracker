@@ -1,16 +1,31 @@
 /* 日夜自动换肤 + 遥控器方向键导航 + TV 自动翻页
- * - 白天（日出→日落）= .theme-day 纸感卡片；夜间 = .theme-night 深色终端
- * - 日出日落：NOAA 公式本地计算，不调外部 API；坐标优先浏览器定位，失败用上海 (31.23, 121.47)，缓存 localStorage
+ * - 时钟与日历一律用北京时间 Asia/Shanghai
+ * - 日出→日落 = 浅色主题；日落→次日日出 = 深色主题
+ * - 日出日落：同一套 NOAA 公式，坐标固定北京 (39.9042N, 116.4074E)，不再使用浏览器定位
+ * - 北京日历日单双决定哪一对主题：
+ *     单日 day=01 秋季色调 / night=12 大胆黑与金
+ *     双日 day=03 节日而现代 / night=02 鲜艳霓虹
  * - 手动模式：auto / night / day，存 localStorage("dn-mode")
- * - 测试参数：?force=day|night，?now=ISO 时间
+ * - 测试参数：?force=day|night ，?now=ISO 时间 ，?theme=01|02|03|12
  * 只切换 <html> 的 class，不刷新页面，焦点、滚动、已输入内容都不受影响。
  */
 (function () {
   "use strict";
   var R = Math.PI / 180, LS = window.localStorage, doc = document.documentElement;
   var q = new URLSearchParams(location.search);
-  var MODE_KEY = "dn-mode", GEO_KEY = "dn-geo";
-  var DEFAULT_GEO = { lat: 31.23, lng: 121.47, src: "默认上海" };
+  var MODE_KEY = "dn-mode";
+  var BJ_TZ = "Asia/Shanghai";
+  /* 天安门附近，固定用于太阳高度角；不读定位、不读旧的 dn-geo 缓存 */
+  var BEIJING = { lat: 39.9042, lng: 116.4074, src: "北京" };
+  var PALETTE_IDS = ["01", "02", "03", "12"];
+  var PALETTES = {
+    "01": { id: "01", name: "秋季色调", en: "Autumn", phase: "day", bg: "#F3EDE3" },
+    "02": { id: "02", name: "鲜艳霓虹", en: "Neon Pop", phase: "night", bg: "#1A0B2E" },
+    "03": { id: "03", name: "节日而现代", en: "Festive Modern", phase: "day", bg: "#F5F7FB" },
+    "12": { id: "12", name: "大胆黑与金", en: "Black & Gold", phase: "night", bg: "#0E0E0E" }
+  };
+  /* 单日 / 双日（北京日-of-month）各一对浅色+深色 */
+  var PAIR = { odd: { day: "01", night: "12" }, even: { day: "03", night: "02" } };
 
   function lsGet(k) { try { return LS.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { LS.setItem(k, v); } catch (e) { /* 隐私模式 */ } }
@@ -41,28 +56,72 @@
     return { rise: r ? new Date(r) : null, set: s ? new Date(s) : null };
   }
 
+  /* URLSearchParams 会把 + 当成空格，北京偏移 +08:00 必须按字面加号读 */
+  function queryValue(name) {
+    if (name !== "now") return q.get(name);
+    var qstr = String(location.search || "").replace(/^\?/, "");
+    var parts = qstr.split("&");
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      var idx = parts[i].indexOf("=");
+      var rawKey = idx === -1 ? parts[i] : parts[i].slice(0, idx);
+      var key = rawKey;
+      try { key = decodeURIComponent(rawKey.replace(/\+/g, " ")); } catch (e) { /* 保持原样 */ }
+      if (key !== "now") continue;
+      var rawVal = idx === -1 ? "" : parts[i].slice(idx + 1);
+      try { return decodeURIComponent(rawVal.replace(/\+/g, "%2B")); } catch (e2) { return q.get("now"); }
+    }
+    return q.get("now");
+  }
+
   var t0 = Date.now();
-  var nowParam = q.get("now"), base = nowParam && !isNaN(Date.parse(nowParam)) ? Date.parse(nowParam) : t0;
+  var nowParam = queryValue("now"), base = nowParam && !isNaN(Date.parse(nowParam)) ? Date.parse(nowParam) : t0;
   function now() { return new Date(base + (Date.now() - t0)); }
   window.DN_NOW = now; // 供交易时段卡片使用同一时钟（便于 ?now= 测试）
 
-  function geo() {
-    try { var c = JSON.parse(lsGet(GEO_KEY)); if (c && isFinite(c.lat) && isFinite(c.lng)) return c; } catch (e) { /* ignore */ }
-    return DEFAULT_GEO;
+  function geo() { return BEIJING; }
+
+  /* 北京日历的年月日（日界是 Asia/Shanghai，不是浏览器本地，也不是 UTC） */
+  function beijingParts(date) {
+    var fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: BJ_TZ, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    });
+    var map = {};
+    fmt.formatToParts(date).forEach(function (p) { if (p.type !== "literal") map[p.type] = p.value; });
+    var hh = parseInt(map.hour, 10);
+    if (hh === 24) hh = 0;
+    return { y: +map.year, m: +map.month, d: +map.day, hh: hh, mm: +map.minute };
+  }
+
+  function parityOf(date) { return beijingParts(date).d % 2 === 1 ? "odd" : "even"; }
+
+  /* 用北京当日的 UTC 日期锚点跑 NOAA，得到这一北京日历日的日出/日落瞬间 */
+  function sunForBeijingDay(date) {
+    var p = beijingParts(date);
+    var anchor = new Date(Date.UTC(p.y, p.m - 1, p.d, 4, 0, 0));
+    return sun(anchor, BEIJING.lat, BEIJING.lng);
   }
 
   function isDaytime() {
-    var c = geo(), n = now();
+    var n = now();
     for (var k = -1; k <= 1; k++) {
-      var s = sun(new Date(n.getTime() + k * 864e5), c.lat, c.lng);
+      var s = sun(new Date(n.getTime() + k * 864e5), BEIJING.lat, BEIJING.lng);
       if (s.rise && s.set && n >= s.rise && n < s.set) return true;
     }
-    var s0 = sun(n, c.lat, c.lng);
-    if (!s0.rise || !s0.set) { // 极昼/极夜：按半球季节粗判
+    var s0 = sun(n, BEIJING.lat, BEIJING.lng);
+    if (!s0.rise || !s0.set) {
       var summer = n.getUTCMonth() > 2 && n.getUTCMonth() < 9;
-      return c.lat > 0 ? summer : !summer;
+      return BEIJING.lat > 0 ? summer : !summer;
     }
     return false;
+  }
+
+  function normTheme(raw) {
+    if (!raw) return null;
+    var s = String(raw).trim().toLowerCase();
+    var map = { "1": "01", "01": "01", "2": "02", "02": "02", "3": "03", "03": "03", "12": "12" };
+    return map[s] || null;
   }
 
   function mode() { var m = lsGet(MODE_KEY); return m === "day" || m === "night" ? m : "auto"; }
@@ -73,45 +132,73 @@
     return m === "auto" ? (isDaytime() ? "day" : "night") : m;
   }
 
+  function resolveTheme() {
+    var n = now();
+    var phase = wanted();
+    var parity = parityOf(n);
+    var forcedId = normTheme(q.get("theme"));
+    var id = forcedId || PAIR[parity][phase];
+    var palette = PALETTES[id];
+    return {
+      id: id,
+      palette: palette,
+      /* ?theme= 时用该配色自己的明暗，避免浅色盘配上夜间结构 */
+      phase: forcedId ? palette.phase : phase,
+      parity: parity,
+      forced: !!forcedId,
+      bj: beijingParts(n)
+    };
+  }
+
   var current = null, toggles = [], menu = null, menuBtn = null;
   function apply(fade) {
-    var t = wanted();
-    if (t === current) { updateLabels(); return; }
+    var r = resolveTheme();
+    if (current && current.id === r.id && current.phase === r.phase) { updateLabels(); return; }
     if (fade && current) {
       doc.classList.add("dn-fade");
       setTimeout(function () { doc.classList.remove("dn-fade"); }, 520);
     }
     var sx = window.scrollX, sy = window.scrollY;
     doc.classList.add("dn");
-    doc.classList.toggle("theme-day", t === "day");
-    doc.classList.toggle("theme-night", t === "night");
+    doc.classList.toggle("theme-day", r.phase === "day");
+    doc.classList.toggle("theme-night", r.phase === "night");
+    PALETTE_IDS.forEach(function (id) { doc.classList.toggle("palette-" + id, id === r.id); });
+    if (doc.dataset) {
+      doc.dataset.palette = r.id;
+      doc.dataset.paletteName = r.palette.name;
+      doc.dataset.bjParity = r.parity;
+      doc.dataset.bjDay = String(r.bj.d);
+    }
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", t === "day" ? "#f4f2ee" : "#12161c");
-    current = t;
+    if (meta) meta.setAttribute("content", r.palette.bg);
+    var scheme = document.querySelector('meta[name="color-scheme"]');
+    if (scheme) scheme.setAttribute("content", r.phase === "day" ? "light" : "dark");
+    current = { id: r.id, phase: r.phase };
     if (sy || sx) { window.scrollTo(sx, sy); requestAnimationFrame(function () { window.scrollTo(sx, sy); }); }
     updateLabels();
   }
   apply(false); // 在 <head> 里同步执行，避免首屏闪烁
 
-  if (navigator.geolocation && !nowParam) {
-    try {
-      navigator.geolocation.getCurrentPosition(function (p) {
-        lsSet(GEO_KEY, JSON.stringify({ lat: +p.coords.latitude.toFixed(3), lng: +p.coords.longitude.toFixed(3), src: "定位", ts: Date.now() }));
-        apply(true);
-      }, function () { /* 拒绝或失败：沿用缓存或上海 */ }, { timeout: 8000, maximumAge: 6 * 3600e3 });
-    } catch (e) { /* ignore */ }
-  }
   setInterval(function () { apply(true); }, 60000);
 
   /* ---------- 切换按钮 / 菜单 ---------- */
   var MODES = [["auto", "◐ 自动"], ["night", "☾ 强制夜间"], ["day", "☀ 强制日间"]];
-  function hm(d) { return d ? d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }) : "--:--"; }
-  function sunText() { var c = geo(), s = sun(now(), c.lat, c.lng); return "日出 " + hm(s.rise) + " · 日落 " + hm(s.set) + "（" + c.src + "）"; }
+  function hm(d) {
+    return d ? d.toLocaleTimeString("zh-CN", { timeZone: BJ_TZ, hour: "2-digit", minute: "2-digit", hour12: false }) : "--:--";
+  }
+  function sunText() {
+    var r = resolveTheme();
+    var s = sunForBeijingDay(now());
+    var dayWord = r.parity === "odd" ? "单日" : "双日";
+    return "日出 " + hm(s.rise) + " · 日落 " + hm(s.set) + "（北京）· " + dayWord + " · " + r.palette.id + " " + r.palette.name;
+  }
   function labelFor() {
+    var r = resolveTheme();
+    if (r.forced) return "⚑ " + r.palette.name + " <small>" + r.palette.id + "</small>";
     var f = q.get("force");
     var m = mode(), name = MODES.filter(function (x) { return x[0] === m; })[0][1];
     if (f === "day" || f === "night") name = "⚑ 测试";
-    return name + " <small>" + (current === "day" ? "日间" : "夜间") + "</small>";
+    return name + " <small>" + r.palette.name + "</small>";
   }
   function updateLabels() {
     toggles.forEach(function (b) {
@@ -279,8 +366,23 @@
       setTimeout(function () { paint(false); }, 600);
     }, PAGE_MS);
     setInterval(function () { paint(paused()); }, 1000);
-    window.NOAA_SUN_DEBUG = { sun: sun, isDaytime: isDaytime, geo: geo };
+    window.NOAA_SUN_DEBUG = debugApi();
   }
+
+  function debugApi() {
+    return {
+      sun: sun,
+      isDaytime: isDaytime,
+      geo: geo,
+      beijingParts: beijingParts,
+      parityOf: parityOf,
+      sunForBeijingDay: sunForBeijingDay,
+      resolveTheme: resolveTheme,
+      palettes: PALETTES,
+      pair: PAIR
+    };
+  }
+  window.NOAA_SUN_DEBUG = debugApi();
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initUI);
   else initUI();
