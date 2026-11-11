@@ -1,22 +1,22 @@
 {
-  "updatedAt": "2026-11-10T11:58:10.938655+08:00",
+  "updatedAt": "2026-11-11T09:43:39.451122+08:00",
   "latest": {
-    "t0": "2026-11-09",
-    "capturedAt": "2026-11-10T11:58:10.938655+08:00",
-    "capturedAtNy": "2026-11-09T22:58:10.938666-05:00",
+    "t0": "2026-11-10",
+    "capturedAt": "2026-11-11T09:43:39.451122+08:00",
+    "capturedAtNy": "2026-11-10T20:43:39.451134-05:00",
     "fx": {
-      "hkd": 7.8424,
-      "cny": 6.6699
+      "hkd": 7.8451,
+      "cny": 6.6766
     },
-    "quotesUpdatedAt": "2026-11-10T11:58:10.885114+08:00",
-    "totalMvUsd": 2523524.66,
-    "totalCostUsd": 2969465.73,
-    "totalMvPrevCloseUsd": 2475594.38,
-    "dayChangeVsPrevCloseUsd": 47930.28,
+    "quotesUpdatedAt": "2026-11-11T09:43:39.401171+08:00",
+    "totalMvUsd": 2514296.02,
+    "totalCostUsd": 2968450.82,
+    "totalMvPrevCloseUsd": 2521022.26,
+    "dayChangeVsPrevCloseUsd": -6726.23,
     "holdingCount": 28,
     "missingQuotes": [],
-    "dailyPnlVsPriorT0Usd": 56090.83,
-    "priorT0": "2026-11-06",
+    "dailyPnlVsPriorT0Usd": -9228.64,
+    "priorT0": "2026-11-09",
     "note": "T0=美股常规交易日收盘日；此时 A股/港股该日历交易时段已结束"
   },
   "snapshots": [
@@ -380,6 +380,25 @@
       "missingQuotes": [],
       "dailyPnlVsPriorT0Usd": 56090.83,
       "priorT0": "2026-11-06",
+      "note": "T0=美股常规交易日收盘日；此时 A股/港股该日历交易时段已结束"
+    },
+    {
+      "t0": "2026-11-10",
+      "capturedAt": "2026-11-11T09:43:39.451122+08:00",
+      "capturedAtNy": "2026-11-10T20:43:39.451134-05:00",
+      "fx": {
+        "hkd": 7.8451,
+        "cny": 6.6766
+      },
+      "quotesUpdatedAt": "2026-11-11T09:43:39.401171+08:00",
+      "totalMvUsd": 2514296.02,
+      "totalCostUsd": 2968450.82,
+      "totalMvPrevCloseUsd": 2521022.26,
+      "dayChangeVsPrevCloseUsd": -6726.23,
+      "holdingCount": 28,
+      "missingQuotes": [],
+      "dailyPnlVsPriorT0Usd": -9228.64,
+      "priorT0": "2026-11-09",
       "note": "T0=美股常规交易日收盘日；此时 A股/港股该日历交易时段已结束"
     }
   ]
