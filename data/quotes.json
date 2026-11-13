@@ -1,46 +1,46 @@
 {
-  "updatedAt": "2026-11-13T16:49:28.551026+08:00",
+  "updatedAt": "2026-11-14T01:06:51.428312+08:00",
   "quotes": {
     "PDD": {
-      "price": 77.53,
-      "previousClose": 79.01,
-      "changePct": -1.873,
+      "price": 78.5,
+      "previousClose": 77.53,
+      "changePct": 1.251,
       "currency": "USD"
     },
     "COIN": {
-      "price": 130.67,
-      "previousClose": 136.27,
-      "changePct": -4.109,
+      "price": 127.81,
+      "previousClose": 130.67,
+      "changePct": -2.189,
       "currency": "USD"
     },
     "NVO": {
-      "price": 40.65,
-      "previousClose": 41.09,
-      "changePct": -1.071,
+      "price": 40.985,
+      "previousClose": 40.65,
+      "changePct": 0.824,
       "currency": "USD"
     },
     "CAG": {
-      "price": 14.55,
-      "previousClose": 14.83,
-      "changePct": -1.888,
+      "price": 14.665,
+      "previousClose": 14.55,
+      "changePct": 0.79,
       "currency": "USD"
     },
     "TSLA": {
-      "price": 397.45,
-      "previousClose": 390.816,
-      "changePct": 1.697,
+      "price": 390.99,
+      "previousClose": 397.45,
+      "changePct": -1.625,
       "currency": "USD"
     },
     "SPCX": {
-      "price": 139.94,
-      "previousClose": 139.75,
-      "changePct": 0.136,
+      "price": 138.64,
+      "previousClose": 139.94,
+      "changePct": -0.929,
       "currency": "USD"
     },
     "SPY": {
-      "price": 757.12,
-      "previousClose": 759.81,
-      "changePct": -0.354,
+      "price": 751.42,
+      "previousClose": 757.12,
+      "changePct": -0.753,
       "currency": "USD"
     },
     "0700.HK": {
@@ -152,15 +152,15 @@
       "currency": "CNY"
     },
     "USDHKD=X": {
-      "price": 7.8452,
+      "price": 7.8457,
       "previousClose": 7.8442,
-      "changePct": 0.0127,
+      "changePct": 0.0191,
       "currency": "HKD"
     },
     "USDCNY=X": {
-      "price": 6.6702,
+      "price": 6.6611,
       "previousClose": 6.6626,
-      "changePct": 0.1141,
+      "changePct": -0.0225,
       "currency": "CNY"
     }
   }
