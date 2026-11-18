@@ -1,46 +1,46 @@
 {
-  "updatedAt": "2026-11-18T02:28:05.700603+08:00",
+  "updatedAt": "2026-11-18T09:15:21.632098+08:00",
   "quotes": {
     "PDD": {
-      "price": 78.17,
+      "price": 77.39,
       "previousClose": 78.11,
-      "changePct": 0.077,
+      "changePct": -0.922,
       "currency": "USD"
     },
     "COIN": {
-      "price": 117.05,
+      "price": 115.02,
       "previousClose": 119.84,
-      "changePct": -2.328,
+      "changePct": -4.022,
       "currency": "USD"
     },
     "NVO": {
-      "price": 40.95,
+      "price": 40.7,
       "previousClose": 41.6,
-      "changePct": -1.562,
+      "changePct": -2.163,
       "currency": "USD"
     },
     "CAG": {
-      "price": 15.005,
+      "price": 14.67,
       "previousClose": 15.16,
-      "changePct": -1.022,
+      "changePct": -3.232,
       "currency": "USD"
     },
     "TSLA": {
-      "price": 380.53,
+      "price": 380.11,
       "previousClose": 379.74,
-      "changePct": 0.208,
+      "changePct": 0.097,
       "currency": "USD"
     },
     "SPCX": {
-      "price": 141.475,
+      "price": 141.7,
       "previousClose": 137.36,
-      "changePct": 2.996,
+      "changePct": 3.16,
       "currency": "USD"
     },
     "SPY": {
-      "price": 733.16,
+      "price": 732.44,
       "previousClose": 739.95,
-      "changePct": -0.918,
+      "changePct": -1.015,
       "currency": "USD"
     },
     "0700.HK": {
@@ -51,8 +51,8 @@
     },
     "0981.HK": {
       "price": 49.2,
-      "previousClose": 46.08,
-      "changePct": 6.771,
+      "previousClose": 49.2,
+      "changePct": 0.0,
       "currency": "HKD"
     },
     "1519.HK": {
@@ -152,15 +152,15 @@
       "currency": "CNY"
     },
     "USDHKD=X": {
-      "price": 7.8459,
+      "price": 7.8458,
       "previousClose": 7.8459,
-      "changePct": 0.0,
+      "changePct": -0.0008,
       "currency": "HKD"
     },
     "USDCNY=X": {
-      "price": 6.6545,
-      "previousClose": 6.6539,
-      "changePct": 0.009,
+      "price": 6.6654,
+      "previousClose": 6.6553,
+      "changePct": 0.1518,
       "currency": "CNY"
     }
   }
